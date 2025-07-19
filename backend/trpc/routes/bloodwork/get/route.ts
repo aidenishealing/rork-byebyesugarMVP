@@ -8,7 +8,7 @@ const getBloodworkSchema = z.object({
 
 export const getBloodworkProcedure = protectedProcedure
   .input(getBloodworkSchema)
-  .query(async ({ input, ctx }) => {
+  .query(async ({ input, ctx }: { input: { userId?: string }, ctx: any }) => {
     try {
       const { userId } = input;
       const requestingUserId = ctx.user.id;

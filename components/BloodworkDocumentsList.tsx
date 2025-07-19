@@ -92,12 +92,12 @@ export default function BloodworkDocumentsList({
     try {
       if (Platform.OS === 'web') {
         // For web, trigger download
-        const link = document.createElement('a');
+        const link = window.document.createElement('a');
         link.href = document.fileUrl;
         link.download = document.fileName;
-        document.body.appendChild(link);
+        window.document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        window.document.body.removeChild(link);
       } else {
         // For mobile, show options
         Alert.alert(

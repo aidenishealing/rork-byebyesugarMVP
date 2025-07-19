@@ -11,7 +11,7 @@ const uploadBloodworkSchema = z.object({
 
 export const uploadBloodworkProcedure = protectedProcedure
   .input(uploadBloodworkSchema)
-  .mutation(async ({ input, ctx }) => {
+  .mutation(async ({ input, ctx }: { input: { fileName: string; fileType: string; fileSize: number; fileData: string }, ctx: any }) => {
     try {
       const { fileName, fileType, fileSize, fileData } = input;
       const userId = ctx.user.id;

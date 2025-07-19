@@ -47,7 +47,7 @@ export default function BloodworkUploadModal({
       onClose();
       Alert.alert('Success', 'Bloodwork document uploaded successfully!');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       setIsUploading(false);
       setUploadProgress(0);
       Alert.alert('Upload Failed', error.message || 'Failed to upload document. Please try again.');

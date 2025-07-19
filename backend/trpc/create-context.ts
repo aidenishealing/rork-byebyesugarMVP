@@ -5,14 +5,35 @@ import superjson from "superjson";
 // Context creation function
 export const createContext = async (opts: FetchCreateContextFnOptions) => {
   try {
+    // Extract user info from headers or token (simplified for demo)
+    const authHeader = opts.req.headers.get('authorization');
+    
+    // In a real app, you would validate the token and get user info from database
+    // For demo purposes, we'll create a mock user
+    const user = {
+      id: 'demo-user',
+      name: 'Demo User',
+      phoneNumber: '+1234567890',
+      role: 'client' as const,
+    };
+    
     return {
       req: opts.req,
+      user,
       // You can add more context items here like database connections, auth, etc.
     };
   } catch (error) {
     console.error("Error creating tRPC context:", error);
     // Return a basic context even if there's an error
-    return { req: opts.req };
+    return { 
+      req: opts.req,
+      user: {
+        id: 'demo-user',
+        name: 'Demo User',
+        phoneNumber: '+1234567890',
+        role: 'client' as const,
+      }
+    };
   }
 };
 

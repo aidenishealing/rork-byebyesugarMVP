@@ -11,7 +11,7 @@ const uploadBloodworkSchema = z.object({
 
 export const uploadBloodworkProcedure = protectedProcedure
   .input(uploadBloodworkSchema)
-  .mutation(async ({ input, ctx }) => {
+  .mutation(async ({ input, ctx }: { input: any; ctx: any }) => {
     try {
       const { fileName, fileType, fileSize, fileData } = input;
       const userId = ctx.user?.id || 'demo-user';
@@ -22,16 +22,20 @@ export const uploadBloodworkProcedure = protectedProcedure
         throw new Error('Invalid file type. Only PDF, DOCX, TXT, JPEG, and PNG files are allowed.');
       }
       
-      // Validate file size (10MB limit)
-      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      // Validate file size (5MB limit for better compatibility)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
       if (fileSize > maxSize) {
-        throw new Error('File size exceeds 10MB limit.');
+        throw new Error('File size exceeds 5MB limit.');
       }
       
       // Validate base64 data length to prevent memory issues
-      if (fileData.length > 15 * 1024 * 1024) { // ~15MB base64 limit
+      // Base64 encoding increases size by ~33%, so 5MB file becomes ~6.7MB
+      if (fileData.length > 7 * 1024 * 1024) { // ~7MB base64 limit for 5MB files
         throw new Error('File data too large for processing.');
       }
+      
+      // Log file processing info
+      console.log(`Processing file: ${fileName}, size: ${fileSize} bytes, base64 length: ${fileData.length}`);
       
       // In a real application, you would:
       // 1. Save the file to a secure storage service (AWS S3, Google Cloud Storage, etc.)
@@ -55,8 +59,11 @@ export const uploadBloodworkProcedure = protectedProcedure
         fileUrl,
       };
       
+      // Simulate processing delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       // In a real app, save to database here
-      console.log('Bloodwork document uploaded:', {
+      console.log('Bloodwork document uploaded successfully:', {
         id: document.id,
         fileName: document.fileName,
         fileType: document.fileType,

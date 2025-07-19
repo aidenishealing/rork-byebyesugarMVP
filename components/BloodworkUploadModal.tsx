@@ -39,13 +39,27 @@ export default function BloodworkUploadModal({
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const uploadMutation = trpc.bloodwork.upload.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Upload successful:', data);
       setIsUploading(false);
-      setUploadProgress(0);
-      setSelectedFile(null);
-      onUploadSuccess();
-      onClose();
-      Alert.alert('Success', 'Bloodwork document uploaded successfully!');
+      setUploadProgress(100);
+      
+      // Show success message
+      Alert.alert(
+        'Upload Successful!', 
+        `${selectedFile?.name || 'Document'} has been uploaded successfully.`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              setSelectedFile(null);
+              setUploadProgress(0);
+              onUploadSuccess();
+              onClose();
+            }
+          }
+        ]
+      );
     },
     onError: (error) => {
       console.error('Upload mutation error:', error);
@@ -55,7 +69,9 @@ export default function BloodworkUploadModal({
       let errorMessage = 'Failed to upload document. Please try again.';
       
       if (error?.message) {
-        if (error.message.includes('timeout')) {
+        if (error.message.includes('Failed to fetch')) {
+          errorMessage = 'Network connection error. Please check your internet connection and try again.';
+        } else if (error.message.includes('timeout')) {
           errorMessage = 'Upload timed out. Please check your connection and try again.';
         } else if (error.message.includes('too large')) {
           errorMessage = 'File is too large. Please select a smaller file.';
@@ -86,9 +102,9 @@ export default function BloodworkUploadModal({
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const file = result.assets[0];
         
-        // Check file size (10MB limit)
-        if (file.size && file.size > 10 * 1024 * 1024) {
-          Alert.alert('File Too Large', 'Please select a file smaller than 10MB.');
+        // Check file size (5MB limit for better compatibility)
+        if (file.size && file.size > 5 * 1024 * 1024) {
+          Alert.alert('File Too Large', 'Please select a file smaller than 5MB for better upload reliability.');
           return;
         }
 
@@ -125,9 +141,9 @@ export default function BloodworkUploadModal({
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const image = result.assets[0];
         
-        // Check file size (10MB limit)
-        if (image.fileSize && image.fileSize > 10 * 1024 * 1024) {
-          Alert.alert('File Too Large', 'Please select an image smaller than 10MB.');
+        // Check file size (5MB limit for better compatibility)
+        if (image.fileSize && image.fileSize > 5 * 1024 * 1024) {
+          Alert.alert('File Too Large', 'Please select an image smaller than 5MB for better upload reliability.');
           return;
         }
 
@@ -156,8 +172,8 @@ export default function BloodworkUploadModal({
         const blob = await response.blob();
         
         // Check blob size before processing
-        if (blob.size > 10 * 1024 * 1024) {
-          throw new Error('File size exceeds 10MB limit');
+        if (blob.size > 5 * 1024 * 1024) {
+          throw new Error('File size exceeds 5MB limit');
         }
         
         return new Promise((resolve, reject) => {
@@ -189,8 +205,8 @@ export default function BloodworkUploadModal({
           throw new Error('File does not exist');
         }
         
-        if (fileInfo.size && fileInfo.size > 10 * 1024 * 1024) {
-          throw new Error('File size exceeds 10MB limit');
+        if (fileInfo.size && fileInfo.size > 5 * 1024 * 1024) {
+          throw new Error('File size exceeds 5MB limit');
         }
         
         const base64 = await FileSystem.readAsStringAsync(uri, {
@@ -337,7 +353,7 @@ export default function BloodworkUploadModal({
         <ScrollView style={styles.content}>
           <Text style={styles.description}>
             Upload your bloodwork documents, lab reports, or medical images. 
-            Supported formats: PDF, DOCX, TXT, JPEG, PNG (max 10MB)
+            Supported formats: PDF, DOCX, TXT, JPEG, PNG (max 5MB)
           </Text>
 
           <View style={styles.uploadSection}>

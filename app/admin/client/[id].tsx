@@ -10,7 +10,7 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Calendar, PlusCircle, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { Calendar, PlusCircle, ChevronLeft, ChevronRight, FileText } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import Header from '@/components/Header';
 import Card from '@/components/Card';
@@ -21,6 +21,8 @@ import { DailyHabits } from '@/types/habit';
 import { format, formatDisplayDate } from '@/utils/date';
 import VoiceInput from '@/components/VoiceInput';
 import VoiceHabitProcessor from '@/components/VoiceHabitProcessor';
+import BloodworkDocumentsList from '@/components/BloodworkDocumentsList';
+import { BloodworkDocument } from '@/types/habit';
 
 export default function ClientDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -45,9 +47,14 @@ export default function ClientDetailScreen() {
   const [voiceTranscription, setVoiceTranscription] = useState('');
   const [voiceTargetDate, setVoiceTargetDate] = useState<string>('');
   
+  // Bloodwork state
+  const [bloodworkDocuments, setBloodworkDocuments] = useState<BloodworkDocument[]>([]);
+  const [loadingBloodwork, setLoadingBloodwork] = useState(false);
+  
   useEffect(() => {
     if (id) {
       fetchClientHabits(id);
+      fetchClientBloodwork(id);
       
       // In a real app, fetch client details from API
       // For now, use mock data
@@ -159,6 +166,52 @@ export default function ClientDetailScreen() {
     setVoiceProcessorVisible(false);
     setVoiceTranscription('');
     setVoiceTargetDate('');
+  };
+  
+  // Bloodwork handlers
+  const fetchClientBloodwork = async (clientId: string) => {
+    setLoadingBloodwork(true);
+    try {
+      // In a real app, this would use trpc.bloodwork.get.useQuery({ userId: clientId })
+      // For now, we'll simulate with mock data
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const mockDocuments: BloodworkDocument[] = [
+        {
+          id: 'doc_1',
+          userId: clientId,
+          fileName: 'Blood_Test_Results_Jan_2024.pdf',
+          fileType: 'application/pdf',
+          fileSize: 2048576,
+          uploadDate: '2024-01-15T10:30:00Z',
+          fileUrl: `https://storage.example.com/bloodwork/${clientId}/doc_1`,
+        },
+        {
+          id: 'doc_2',
+          userId: clientId,
+          fileName: 'Lab_Report_Dec_2023.pdf',
+          fileType: 'application/pdf',
+          fileSize: 1536000,
+          uploadDate: '2023-12-20T14:45:00Z',
+          fileUrl: `https://storage.example.com/bloodwork/${clientId}/doc_2`,
+        },
+        {
+          id: 'doc_3',
+          userId: clientId,
+          fileName: 'Glucose_Chart.png',
+          fileType: 'image/png',
+          fileSize: 512000,
+          uploadDate: '2023-12-10T09:15:00Z',
+          fileUrl: `https://storage.example.com/bloodwork/${clientId}/doc_3`,
+        },
+      ];
+      
+      setBloodworkDocuments(mockDocuments);
+    } catch (error) {
+      console.error('Error fetching client bloodwork:', error);
+    } finally {
+      setLoadingBloodwork(false);
+    }
   };
   
   // Date navigation
@@ -362,6 +415,18 @@ export default function ClientDetailScreen() {
                 />
               </View>
             )}
+          </Card>
+          
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Bloodwork Documents</Text>
+          </View>
+          
+          <Card style={styles.bloodworkCard}>
+            <BloodworkDocumentsList
+              documents={bloodworkDocuments}
+              isLoading={loadingBloodwork}
+              emptyMessage={`No bloodwork documents found for ${client.name}`}
+            />
           </Card>
           
           <View style={styles.sectionHeader}>
@@ -612,5 +677,8 @@ const styles = StyleSheet.create({
   },
   addFirstButton: {
     marginTop: 8,
+  },
+  bloodworkCard: {
+    marginBottom: 24,
   },
 });

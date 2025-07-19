@@ -15,7 +15,7 @@ import {
   ColorValue
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Calendar, History, User, Bell, Edit, Plus, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react-native';
+import { Calendar, History, User, Bell, Edit, Plus, ChevronLeft, ChevronRight, MessageCircle, FileText } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Header from '@/components/Header';
 import Card from '@/components/Card';
@@ -34,6 +34,9 @@ import ReminderModal from '@/components/ReminderModal';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import VoiceInput from '@/components/VoiceInput';
 import VoiceHabitProcessor from '@/components/VoiceHabitProcessor';
+import BloodworkUploadModal from '@/components/BloodworkUploadModal';
+import BloodworkDocumentsList from '@/components/BloodworkDocumentsList';
+import { BloodworkDocument } from '@/types/habit';
 
 export default function ClientHomeScreen() {
   const router = useRouter();
@@ -83,6 +86,11 @@ export default function ClientHomeScreen() {
   // Voice input state
   const [voiceProcessorVisible, setVoiceProcessorVisible] = useState(false);
   const [voiceTranscription, setVoiceTranscription] = useState('');
+  
+  // Bloodwork state
+  const [bloodworkModalVisible, setBloodworkModalVisible] = useState(false);
+  const [bloodworkDocuments, setBloodworkDocuments] = useState<BloodworkDocument[]>([]);
+  const [loadingBloodwork, setLoadingBloodwork] = useState(false);
   
   useEffect(() => {
     // Check authentication
@@ -304,6 +312,56 @@ export default function ClientHomeScreen() {
     Alert.alert('Success', 'Reminder status updated!');
   };
   
+  // Bloodwork handlers
+  const handleBloodworkUploadSuccess = () => {
+    // Refresh bloodwork documents list
+    fetchBloodworkDocuments();
+  };
+  
+  const fetchBloodworkDocuments = async () => {
+    setLoadingBloodwork(true);
+    try {
+      // In a real app, this would use trpc.bloodwork.get.useQuery()
+      // For now, we'll simulate with mock data
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const mockDocuments: BloodworkDocument[] = [
+        {
+          id: 'doc_1',
+          userId: user?.id || '',
+          fileName: 'Blood_Test_Results_Jan_2024.pdf',
+          fileType: 'application/pdf',
+          fileSize: 2048576,
+          uploadDate: '2024-01-15T10:30:00Z',
+          fileUrl: 'https://storage.example.com/bloodwork/doc_1',
+        },
+        {
+          id: 'doc_2',
+          userId: user?.id || '',
+          fileName: 'Lab_Report_Dec_2023.pdf',
+          fileType: 'application/pdf',
+          fileSize: 1536000,
+          uploadDate: '2023-12-20T14:45:00Z',
+          fileUrl: 'https://storage.example.com/bloodwork/doc_2',
+        },
+      ];
+      
+      setBloodworkDocuments(mockDocuments);
+    } catch (error) {
+      console.error('Error fetching bloodwork documents:', error);
+      Alert.alert('Error', 'Failed to load bloodwork documents.');
+    } finally {
+      setLoadingBloodwork(false);
+    }
+  };
+  
+  // Load bloodwork documents on component mount
+  useEffect(() => {
+    if (user) {
+      fetchBloodworkDocuments();
+    }
+  }, [user]);
+  
   // Voice input handlers
   const handleVoiceTranscription = (text: string) => {
     console.log('Voice transcription received:', text);
@@ -411,6 +469,16 @@ export default function ClientHomeScreen() {
           
           <TouchableOpacity 
             style={styles.profileOption}
+            onPress={() => setBloodworkModalVisible(true)}
+          >
+            <FileText size={24} color={Colors.accent} />
+            <Text style={[styles.profileOptionText, { color: Colors.accent }]}>Add Bloodwork</Text>
+          </TouchableOpacity>
+          
+          <View style={styles.divider} />
+          
+          <TouchableOpacity 
+            style={styles.profileOption}
             onPress={() => setActiveTab('reminders')}
           >
             <Bell size={24} color={Colors.secondary} />
@@ -425,6 +493,25 @@ export default function ClientHomeScreen() {
           >
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
+        </Card>
+        
+        <Card style={styles.profileCard}>
+          <View style={styles.bloodworkHeader}>
+            <Text style={styles.bloodworkTitle}>Bloodwork Documents</Text>
+            <TouchableOpacity 
+              style={styles.addBloodworkButton}
+              onPress={() => setBloodworkModalVisible(true)}
+            >
+              <Plus size={20} color={Colors.primary} />
+              <Text style={styles.addBloodworkText}>Add</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <BloodworkDocumentsList
+            documents={bloodworkDocuments}
+            isLoading={loadingBloodwork}
+            emptyMessage="Upload your first bloodwork document to get started"
+          />
         </Card>
       </View>
     );
@@ -1163,6 +1250,13 @@ export default function ClientHomeScreen() {
         onApplyChanges={handleVoiceHabitUpdates}
       />
       
+      {/* Bloodwork Upload Modal */}
+      <BloodworkUploadModal
+        visible={bloodworkModalVisible}
+        onClose={() => setBloodworkModalVisible(false)}
+        onUploadSuccess={handleBloodworkUploadSuccess}
+      />
+      
       {/* Chat button */}
       <TouchableOpacity 
         style={styles.chatButton}
@@ -1641,5 +1735,32 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
+  },
+  
+  // Bloodwork styles
+  bloodworkHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  bloodworkTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: Colors.text,
+  },
+  addBloodworkButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: `${Colors.primary}15`,
+    borderRadius: 8,
+  },
+  addBloodworkText: {
+    fontSize: 14,
+    color: Colors.primary,
+    fontWeight: '600',
+    marginLeft: 4,
   },
 });

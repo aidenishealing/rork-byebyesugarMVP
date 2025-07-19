@@ -28,3 +28,20 @@ export interface Client extends User {
   habits: Record<string, DailyHabits>;
   lastActive: string;
 }
+
+export interface BloodworkDocument {
+  id: string;
+  userId: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  uploadDate: string;
+  fileUrl: string;
+}
+
+export interface BloodworkUploadRequest {
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  fileData: string; // base64 encoded file data
+}

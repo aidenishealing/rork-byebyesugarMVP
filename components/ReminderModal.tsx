@@ -86,10 +86,11 @@ export default function ReminderModal({
       transparent={true}
       onRequestClose={onClose}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback onPress={() => {}}>
-            <View style={styles.modalContainer}>
+      <View style={styles.overlay}>
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View style={styles.overlayTouchable} />
+        </TouchableWithoutFeedback>
+        <View style={styles.modalContainer}>
               <View style={styles.header}>
                 <Text style={styles.title}>
                   {isEditing ? 'Edit Reminder' : 'Add Reminder'}
@@ -136,6 +137,8 @@ export default function ReminderModal({
                   <TouchableOpacity 
                     style={[styles.button, styles.saveButton]}
                     onPress={handleSave}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    delayPressIn={0}
                   >
                     <Text style={styles.saveButtonText}>
                       {isEditing ? 'Update' : 'Add'} Reminder
@@ -145,6 +148,8 @@ export default function ReminderModal({
                   <TouchableOpacity 
                     style={[styles.button, styles.cancelButton]}
                     onPress={onClose}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    delayPressIn={0}
                   >
                     <Text style={styles.cancelButtonText}>Cancel</Text>
                   </TouchableOpacity>
@@ -162,10 +167,8 @@ export default function ReminderModal({
                   </TouchableOpacity>
                 </View>
               )}
-            </View>
-          </TouchableWithoutFeedback>
         </View>
-      </TouchableWithoutFeedback>
+      </View>
     </Modal>
   );
 }
@@ -177,6 +180,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+  },
+  overlayTouchable: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   modalContainer: {
     backgroundColor: Colors.card,
@@ -237,6 +247,8 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     marginBottom: 12,
+    minHeight: 48,
+    justifyContent: 'center',
   },
   saveButton: {
     backgroundColor: Colors.primary,

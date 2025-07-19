@@ -1142,6 +1142,8 @@ export default function ClientHomeScreen() {
           style={styles.tabItem} 
           onPress={() => setActiveTab('today')}
           activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          delayPressIn={0}
         >
           <Calendar 
             size={24} 
@@ -1158,6 +1160,8 @@ export default function ClientHomeScreen() {
           style={styles.tabItem} 
           onPress={() => setActiveTab('history')}
           activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          delayPressIn={0}
         >
           <History 
             size={24} 
@@ -1177,6 +1181,8 @@ export default function ClientHomeScreen() {
           style={styles.tabItem} 
           onPress={() => setActiveTab('profile')}
           activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          delayPressIn={0}
         >
           <User 
             size={24} 
@@ -1265,6 +1271,9 @@ export default function ClientHomeScreen() {
       <TouchableOpacity 
         style={styles.chatButton}
         onPress={() => router.push('/chat')}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        delayPressIn={0}
+        activeOpacity={0.8}
       >
         <MessageCircle size={24} color="white" />
       </TouchableOpacity>
@@ -1710,6 +1719,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 8,
+    paddingHorizontal: 12,
+    minHeight: 48,
+    flex: 1,
   },
   tabText: {
     fontSize: 16,

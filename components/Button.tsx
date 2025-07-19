@@ -33,6 +33,15 @@ export function Button({
   textStyle,
   icon
 }: ButtonProps) {
+  
+  const handlePress = () => {
+    console.log(`Button "${title}" pressed - variant: ${variant}, disabled: ${disabled}, loading: ${loading}`);
+    if (!disabled && !loading) {
+      onPress();
+    } else {
+      console.log(`Button "${title}" press blocked - disabled: ${disabled}, loading: ${loading}`);
+    }
+  };
   const getButtonStyle = () => {
     switch (variant) {
       case 'secondary':
@@ -67,9 +76,12 @@ export function Button({
         disabled && styles.buttonDisabled,
         style
       ]}
-      onPress={onPress}
+      onPress={handlePress}
       disabled={disabled || loading}
       activeOpacity={0.8}
+      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      delayPressIn={0}
+      delayPressOut={100}
     >
       {loading ? (
         <ActivityIndicator size="small" color={variant === 'primary' ? 'white' : Colors.primary} />
@@ -90,6 +102,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 48,
+    minWidth: 120,
   },
   buttonPrimary: {
     backgroundColor: Colors.primary,

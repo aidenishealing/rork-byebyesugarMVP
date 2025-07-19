@@ -6,6 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
 import { Platform } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -58,21 +59,23 @@ function RootLayoutNav() {
   });
 
   return (
-    <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        <Stack>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="login" options={{ headerShown: false }} />
-          <Stack.Screen name="signup" options={{ headerShown: false }} />
-          <Stack.Screen name="client" options={{ headerShown: false }} />
-          <Stack.Screen name="admin" options={{ headerShown: false }} />
-          <Stack.Screen name="chat" options={{ headerShown: false }} />
-          <Stack.Screen name="admin/client/[id]" options={{ headerShown: false }} />
-          <Stack.Screen name="admin/client/[id]/add-habit" options={{ headerShown: false }} />
-          <Stack.Screen name="admin/client/[id]/edit-habit/[date]" options={{ headerShown: false }} />
-          <Stack.Screen name="admin/add-client" options={{ headerShown: false }} />
-        </Stack>
-      </QueryClientProvider>
-    </trpc.Provider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          <Stack>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="login" options={{ headerShown: false }} />
+            <Stack.Screen name="signup" options={{ headerShown: false }} />
+            <Stack.Screen name="client" options={{ headerShown: false }} />
+            <Stack.Screen name="admin" options={{ headerShown: false }} />
+            <Stack.Screen name="chat" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/client/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/client/[id]/add-habit" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/client/[id]/edit-habit/[date]" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/add-client" options={{ headerShown: false }} />
+          </Stack>
+        </QueryClientProvider>
+      </trpc.Provider>
+    </GestureHandlerRootView>
   );
 }

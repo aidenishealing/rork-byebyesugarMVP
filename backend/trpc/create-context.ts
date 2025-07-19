@@ -10,11 +10,14 @@ export const createContext = async (opts: FetchCreateContextFnOptions) => {
     
     // In a real app, you would validate the token and get user info from database
     // For demo purposes, we'll create a mock user
+    // Check if this is an admin request (simplified logic)
+    const isAdminRequest = authHeader?.includes('admin') || opts.req.url?.includes('/admin');
+    
     const user = {
-      id: 'demo-user',
-      name: 'Demo User',
+      id: isAdminRequest ? 'admin-user' : 'demo-user',
+      name: isAdminRequest ? 'Admin User' : 'Demo User',
       phoneNumber: '+1234567890',
-      role: 'client' as const,
+      role: (isAdminRequest ? 'admin' : 'client') as 'admin' | 'client',
     };
     
     return {
@@ -31,7 +34,7 @@ export const createContext = async (opts: FetchCreateContextFnOptions) => {
         id: 'demo-user',
         name: 'Demo User',
         phoneNumber: '+1234567890',
-        role: 'client' as const,
+        role: 'client' as 'admin' | 'client',
       }
     };
   }

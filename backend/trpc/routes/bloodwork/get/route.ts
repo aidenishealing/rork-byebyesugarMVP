@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { protectedProcedure } from '../../../create-context';
+import { protectedProcedure, Context } from '../../../create-context';
 import { BloodworkDocument } from '@/types/habit';
 
 const getBloodworkSchema = z.object({
@@ -8,11 +8,11 @@ const getBloodworkSchema = z.object({
 
 export const getBloodworkProcedure = protectedProcedure
   .input(getBloodworkSchema)
-  .query(async ({ input, ctx }: { input: any; ctx: any }) => {
+  .query(async ({ input, ctx }: { input: z.infer<typeof getBloodworkSchema>; ctx: Context }) => {
     try {
       const { userId } = input;
-      const requestingUserId = ctx.user?.id || 'demo-user';
-      const isAdmin = ctx.user?.role === 'admin';
+      const requestingUserId = ctx.user.id;
+      const isAdmin = ctx.user.role === 'admin';
       
       // Determine which user's documents to fetch
       const targetUserId = userId && isAdmin ? userId : requestingUserId;

@@ -9,7 +9,7 @@ import {
   Linking,
   Platform,
 } from 'react-native';
-import { FileText, Image as ImageIcon, File, Download, Eye } from 'lucide-react-native';
+import { FileText, Image as ImageIcon, File, Eye } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import Card from '@/components/Card';
 import { BloodworkDocument } from '@/types/habit';
@@ -23,7 +23,7 @@ interface BloodworkDocumentsListProps {
 export default function BloodworkDocumentsList({
   documents,
   isLoading = false,
-  emptyMessage = 'No bloodwork documents found',
+  emptyMessage = 'No bloodwork found',
 }: BloodworkDocumentsListProps) {
   
   const formatFileSize = (bytes: number): string => {
@@ -88,42 +88,7 @@ export default function BloodworkDocumentsList({
     }
   };
 
-  const handleDownloadDocument = async (document: BloodworkDocument) => {
-    try {
-      if (Platform.OS === 'web') {
-        // For web, trigger download
-        const link = window.document.createElement('a');
-        link.href = document.fileUrl;
-        link.download = document.fileName;
-        window.document.body.appendChild(link);
-        link.click();
-        window.document.body.removeChild(link);
-      } else {
-        // For mobile, show options
-        Alert.alert(
-          'Download Document',
-          `Download ${document.fileName}?`,
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { 
-              text: 'Download', 
-              onPress: () => {
-                // In a real app, implement download functionality
-                Alert.alert('Download Started', 'Document download has started.');
-              }
-            },
-          ]
-        );
-      }
-    } catch (error) {
-      console.error('Error downloading document:', error);
-      Alert.alert(
-        'Error',
-        'Failed to download document. Please try again.',
-        [{ text: 'OK' }]
-      );
-    }
-  };
+
 
   const renderDocumentItem = ({ item }: { item: BloodworkDocument }) => (
     <Card style={styles.documentCard}>
@@ -152,13 +117,6 @@ export default function BloodworkDocumentsList({
           >
             <Eye size={20} color={Colors.primary} />
           </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleDownloadDocument(item)}
-          >
-            <Download size={20} color={Colors.secondary} />
-          </TouchableOpacity>
         </View>
       </View>
     </Card>
@@ -167,7 +125,7 @@ export default function BloodworkDocumentsList({
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <FileText size={64} color={Colors.textSecondary} />
-      <Text style={styles.emptyTitle}>No Documents</Text>
+      <Text style={styles.emptyTitle}>No Bloodwork</Text>
       <Text style={styles.emptyMessage}>{emptyMessage}</Text>
     </View>
   );

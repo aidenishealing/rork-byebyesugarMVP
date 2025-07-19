@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { protectedProcedure } from '../../../create-context';
+import { protectedProcedure, Context } from '../../../create-context';
 import { BloodworkDocument } from '@/types/habit';
 
 const uploadBloodworkSchema = z.object({
@@ -11,10 +11,10 @@ const uploadBloodworkSchema = z.object({
 
 export const uploadBloodworkProcedure = protectedProcedure
   .input(uploadBloodworkSchema)
-  .mutation(async ({ input, ctx }: { input: any; ctx: any }) => {
+  .mutation(async ({ input, ctx }: { input: z.infer<typeof uploadBloodworkSchema>; ctx: Context }) => {
     try {
       const { fileName, fileType, fileSize, fileData } = input;
-      const userId = ctx.user?.id || 'demo-user';
+      const userId = ctx.user.id;
       
       // Validate file type
       const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'image/jpeg', 'image/png'];
@@ -22,16 +22,16 @@ export const uploadBloodworkProcedure = protectedProcedure
         throw new Error('Invalid file type. Only PDF, DOCX, TXT, JPEG, and PNG files are allowed.');
       }
       
-      // Validate file size (5MB limit for better compatibility)
-      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      // Validate file size (2MB limit for better compatibility)
+      const maxSize = 2 * 1024 * 1024; // 2MB in bytes
       if (fileSize > maxSize) {
-        throw new Error('File size exceeds 5MB limit.');
+        throw new Error('File size exceeds 2MB limit. Please select a smaller file.');
       }
       
       // Validate base64 data length to prevent memory issues
       // Base64 encoding increases size by ~33%, so 5MB file becomes ~6.7MB
-      if (fileData.length > 7 * 1024 * 1024) { // ~7MB base64 limit for 5MB files
-        throw new Error('File data too large for processing.');
+      if (fileData.length > 3 * 1024 * 1024) { // ~3MB base64 limit for better compatibility
+        throw new Error('File data too large for processing. Please select a smaller file.');
       }
       
       // Log file processing info
@@ -71,9 +71,18 @@ export const uploadBloodworkProcedure = protectedProcedure
         uploadDate: document.uploadDate
       });
       
+      // Return minimal response to avoid tRPC transform issues
       return {
         success: true,
-        document,
+        document: {
+          id: document.id,
+          fileName: document.fileName,
+          fileType: document.fileType,
+          fileSize: document.fileSize,
+          uploadDate: document.uploadDate,
+          userId: document.userId,
+          fileUrl: document.fileUrl
+        },
         message: 'Bloodwork document uploaded successfully',
       };
     } catch (error) {

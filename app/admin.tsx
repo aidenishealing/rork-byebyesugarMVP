@@ -62,7 +62,7 @@ export default function AdminDashboard() {
   const [clientToDelete, setClientToDelete] = useState<string | null>(null);
   const [logoutConfirmVisible, setLogoutConfirmVisible] = useState(false);
   
-  // Check authentication and handle new client
+  // Check authentication
   useEffect(() => {
     if (!isAuthenticated) {
       router.replace('/');
@@ -73,8 +73,10 @@ export default function AdminDashboard() {
       router.replace('/client');
       return;
     }
-    
-    // Handle new client data from add-client screen
+  }, [isAuthenticated, isAdmin, router]);
+  
+  // Handle new client data from add-client screen
+  useEffect(() => {
     if (newClient) {
       try {
         const clientData = JSON.parse(newClient);
@@ -85,8 +87,10 @@ export default function AdminDashboard() {
           // Check if client already exists to avoid duplicates
           const exists = prevClients.some(client => client.id === clientData.id);
           if (!exists) {
+            console.log('Adding new client to list:', clientData);
             return [...prevClients, clientData];
           }
+          console.log('Client already exists, not adding duplicate');
           return prevClients;
         });
         
@@ -97,14 +101,16 @@ export default function AdminDashboard() {
           [{ text: 'OK' }]
         );
         
-        // Clear the parameter to prevent re-adding on re-renders
-        router.replace('/admin');
-        
       } catch (error) {
         console.error('Error parsing new client data:', error);
+        Alert.alert(
+          'Error',
+          'Failed to add client. Please try again.',
+          [{ text: 'OK' }]
+        );
       }
     }
-  }, [isAuthenticated, isAdmin, router, newClient]);
+  }, [newClient]);
   
   const handleEditClient = (client: Client) => {
     setEditingClient(client);

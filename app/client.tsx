@@ -497,7 +497,7 @@ export default function ClientHomeScreen() {
         
         <Card style={styles.profileCard}>
           <View style={styles.bloodworkHeader}>
-            <Text style={styles.bloodworkTitle}>Bloodwork Documents</Text>
+            <Text style={styles.bloodworkTitle}>Bloodwork</Text>
             <TouchableOpacity 
               style={styles.addBloodworkButton}
               onPress={() => setBloodworkModalVisible(true)}

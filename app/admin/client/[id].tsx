@@ -418,14 +418,14 @@ export default function ClientDetailScreen() {
           </Card>
           
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Bloodwork Documents</Text>
+            <Text style={styles.sectionTitle}>Bloodwork</Text>
           </View>
           
           <Card style={styles.bloodworkCard}>
             <BloodworkDocumentsList
               documents={bloodworkDocuments}
               isLoading={loadingBloodwork}
-              emptyMessage={`No bloodwork documents found for ${client.name}`}
+              emptyMessage={`No bloodwork found for ${client.name}`}
             />
           </Card>
           

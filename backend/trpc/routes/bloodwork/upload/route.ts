@@ -11,10 +11,10 @@ const uploadBloodworkSchema = z.object({
 
 export const uploadBloodworkProcedure = protectedProcedure
   .input(uploadBloodworkSchema)
-  .mutation(async ({ input, ctx }: { input: { fileName: string; fileType: string; fileSize: number; fileData: string }, ctx: any }) => {
+  .mutation(async ({ input, ctx }) => {
     try {
       const { fileName, fileType, fileSize, fileData } = input;
-      const userId = ctx.user.id;
+      const userId = ctx.user?.id || 'demo-user';
       
       // Validate file type
       const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'image/jpeg', 'image/png'];
@@ -26,6 +26,11 @@ export const uploadBloodworkProcedure = protectedProcedure
       const maxSize = 10 * 1024 * 1024; // 10MB in bytes
       if (fileSize > maxSize) {
         throw new Error('File size exceeds 10MB limit.');
+      }
+      
+      // Validate base64 data length to prevent memory issues
+      if (fileData.length > 15 * 1024 * 1024) { // ~15MB base64 limit
+        throw new Error('File data too large for processing.');
       }
       
       // In a real application, you would:
@@ -51,7 +56,13 @@ export const uploadBloodworkProcedure = protectedProcedure
       };
       
       // In a real app, save to database here
-      console.log('Bloodwork document uploaded:', document);
+      console.log('Bloodwork document uploaded:', {
+        id: document.id,
+        fileName: document.fileName,
+        fileType: document.fileType,
+        fileSize: document.fileSize,
+        uploadDate: document.uploadDate
+      });
       
       return {
         success: true,
@@ -60,7 +71,10 @@ export const uploadBloodworkProcedure = protectedProcedure
       };
     } catch (error) {
       console.error('Error uploading bloodwork document:', error);
-      throw new Error(error instanceof Error ? error.message : 'Failed to upload bloodwork document');
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+      throw new Error('Failed to upload bloodwork document');
     }
   });
 

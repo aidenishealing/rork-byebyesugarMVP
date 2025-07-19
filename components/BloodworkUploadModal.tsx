@@ -47,10 +47,28 @@ export default function BloodworkUploadModal({
       onClose();
       Alert.alert('Success', 'Bloodwork document uploaded successfully!');
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      console.error('Upload mutation error:', error);
       setIsUploading(false);
       setUploadProgress(0);
-      Alert.alert('Upload Failed', error.message || 'Failed to upload document. Please try again.');
+      
+      let errorMessage = 'Failed to upload document. Please try again.';
+      
+      if (error?.message) {
+        if (error.message.includes('timeout')) {
+          errorMessage = 'Upload timed out. Please check your connection and try again.';
+        } else if (error.message.includes('too large')) {
+          errorMessage = 'File is too large. Please select a smaller file.';
+        } else if (error.message.includes('Invalid file type')) {
+          errorMessage = 'Invalid file type. Please select a PDF, DOCX, TXT, JPEG, or PNG file.';
+        } else if (error.message.includes('transform response')) {
+          errorMessage = 'Server error occurred. Please try uploading a smaller file or try again later.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      Alert.alert('Upload Failed', errorMessage);
     },
   });
 
@@ -136,25 +154,60 @@ export default function BloodworkUploadModal({
         // For web, we need to handle file reading differently
         const response = await fetch(uri);
         const blob = await response.blob();
+        
+        // Check blob size before processing
+        if (blob.size > 10 * 1024 * 1024) {
+          throw new Error('File size exceeds 10MB limit');
+        }
+        
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => {
-            const base64 = (reader.result as string).split(',')[1];
-            resolve(base64);
+            try {
+              const result = reader.result as string;
+              if (!result || !result.includes(',')) {
+                throw new Error('Invalid file data');
+              }
+              const base64 = result.split(',')[1];
+              if (!base64) {
+                throw new Error('Failed to extract base64 data');
+              }
+              resolve(base64);
+            } catch (err) {
+              reject(err);
+            }
           };
-          reader.onerror = reject;
+          reader.onerror = () => reject(new Error('Failed to read file'));
           reader.readAsDataURL(blob);
         });
       } else {
         // For mobile, use expo-file-system
         const { FileSystem } = require('expo-file-system');
+        const fileInfo = await FileSystem.getInfoAsync(uri);
+        
+        if (!fileInfo.exists) {
+          throw new Error('File does not exist');
+        }
+        
+        if (fileInfo.size && fileInfo.size > 10 * 1024 * 1024) {
+          throw new Error('File size exceeds 10MB limit');
+        }
+        
         const base64 = await FileSystem.readAsStringAsync(uri, {
           encoding: FileSystem.EncodingType.Base64,
         });
+        
+        if (!base64) {
+          throw new Error('Failed to convert file to base64');
+        }
+        
         return base64;
       }
     } catch (error) {
       console.error('Error converting file to base64:', error);
+      if (error instanceof Error) {
+        throw error;
+      }
       throw new Error('Failed to process file');
     }
   };
@@ -168,12 +221,14 @@ export default function BloodworkUploadModal({
     setIsUploading(true);
     setUploadProgress(0);
 
+    let progressInterval: NodeJS.Timeout | null = null;
+
     try {
       // Simulate upload progress
-      const progressInterval = setInterval(() => {
+      progressInterval = setInterval(() => {
         setUploadProgress((prev) => {
           if (prev >= 90) {
-            clearInterval(progressInterval);
+            if (progressInterval) clearInterval(progressInterval);
             return 90;
           }
           return prev + 10;
@@ -181,9 +236,12 @@ export default function BloodworkUploadModal({
       }, 200);
 
       // Convert file to base64
+      console.log('Converting file to base64...');
       const fileData = await convertFileToBase64(selectedFile.uri);
+      console.log('File converted, base64 length:', fileData.length);
 
       // Upload the file
+      console.log('Starting upload...');
       await uploadMutation.mutateAsync({
         fileName: selectedFile.name,
         fileType: selectedFile.type,
@@ -191,12 +249,28 @@ export default function BloodworkUploadModal({
         fileData,
       });
 
-      clearInterval(progressInterval);
+      if (progressInterval) clearInterval(progressInterval);
       setUploadProgress(100);
+      console.log('Upload completed successfully');
     } catch (error) {
       console.error('Upload error:', error);
+      if (progressInterval) clearInterval(progressInterval);
       setIsUploading(false);
       setUploadProgress(0);
+      
+      let errorMessage = 'Failed to upload document. Please try again.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('too large')) {
+          errorMessage = 'File is too large for processing. Please select a smaller file.';
+        } else if (error.message.includes('Failed to process')) {
+          errorMessage = 'Unable to process the selected file. Please try a different file.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      Alert.alert('Upload Error', errorMessage);
     }
   };
 

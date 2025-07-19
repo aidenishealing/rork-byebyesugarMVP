@@ -8,11 +8,11 @@ const getBloodworkSchema = z.object({
 
 export const getBloodworkProcedure = protectedProcedure
   .input(getBloodworkSchema)
-  .query(async ({ input, ctx }: { input: { userId?: string }, ctx: any }) => {
+  .query(async ({ input, ctx }) => {
     try {
       const { userId } = input;
-      const requestingUserId = ctx.user.id;
-      const isAdmin = ctx.user.role === 'admin';
+      const requestingUserId = ctx.user?.id || 'demo-user';
+      const isAdmin = ctx.user?.role === 'admin';
       
       // Determine which user's documents to fetch
       const targetUserId = userId && isAdmin ? userId : requestingUserId;

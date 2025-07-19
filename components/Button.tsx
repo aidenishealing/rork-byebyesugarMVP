@@ -6,7 +6,8 @@ import {
   ActivityIndicator,
   View,
   ViewStyle,
-  TextStyle
+  TextStyle,
+  Platform
 } from 'react-native';
 import Colors from '@/constants/colors';
 
@@ -35,12 +36,23 @@ export function Button({
 }: ButtonProps) {
   
   const handlePress = () => {
-    console.log(`Button "${title}" pressed - variant: ${variant}, disabled: ${disabled}, loading: ${loading}`);
+    console.log(`[BUTTON DEBUG] Button "${title}" pressed - variant: ${variant}, disabled: ${disabled}, loading: ${loading}`);
+    console.log(`[BUTTON DEBUG] Platform: ${Platform.OS}`);
+    
     if (!disabled && !loading) {
+      console.log(`[BUTTON DEBUG] Executing onPress for "${title}"`);
       onPress();
     } else {
-      console.log(`Button "${title}" press blocked - disabled: ${disabled}, loading: ${loading}`);
+      console.log(`[BUTTON DEBUG] Button "${title}" press blocked - disabled: ${disabled}, loading: ${loading}`);
     }
+  };
+  
+  const handlePressIn = () => {
+    console.log(`[BUTTON DEBUG] PressIn detected for "${title}"`);
+  };
+  
+  const handlePressOut = () => {
+    console.log(`[BUTTON DEBUG] PressOut detected for "${title}"`);
   };
   const getButtonStyle = () => {
     switch (variant) {
@@ -77,11 +89,18 @@ export function Button({
         style
       ]}
       onPress={handlePress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       disabled={disabled || loading}
-      activeOpacity={0.8}
-      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      activeOpacity={0.7}
+      hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
       delayPressIn={0}
-      delayPressOut={100}
+      delayPressOut={50}
+      testID={`button-${title.toLowerCase().replace(/\s+/g, '-')}`}
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityHint={`Tap to ${title.toLowerCase()}`}
     >
       {loading ? (
         <ActivityIndicator size="small" color={variant === 'primary' ? 'white' : Colors.primary} />
@@ -104,6 +123,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 48,
     minWidth: 120,
+    // Ensure button is always touchable
+    overflow: 'visible',
+    // Prevent touch event conflicts
+    zIndex: 1,
   },
   buttonPrimary: {
     backgroundColor: Colors.primary,
@@ -131,6 +154,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
+    // Ensure text doesn't interfere with touch events
+    pointerEvents: 'none',
   },
   textPrimary: {
     color: 'white',

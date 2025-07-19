@@ -1137,13 +1137,18 @@ export default function ClientHomeScreen() {
         {activeTab === 'reminders' && renderRemindersTab()}
       </ScrollView>
       
-      <View style={styles.tabBar}>
+      <View style={styles.tabBar} pointerEvents="box-none">
         <TouchableOpacity 
           style={styles.tabItem} 
-          onPress={() => setActiveTab('today')}
+          onPress={() => {
+            console.log('Today tab pressed');
+            setActiveTab('today');
+          }}
           activeOpacity={0.7}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
           delayPressIn={0}
+          delayPressOut={50}
+          testID="tab-today"
         >
           <Calendar 
             size={24} 
@@ -1158,10 +1163,15 @@ export default function ClientHomeScreen() {
         
         <TouchableOpacity 
           style={styles.tabItem} 
-          onPress={() => setActiveTab('history')}
+          onPress={() => {
+            console.log('History tab pressed');
+            setActiveTab('history');
+          }}
           activeOpacity={0.7}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
           delayPressIn={0}
+          delayPressOut={50}
+          testID="tab-history"
         >
           <History 
             size={24} 
@@ -1179,10 +1189,15 @@ export default function ClientHomeScreen() {
         
         <TouchableOpacity 
           style={styles.tabItem} 
-          onPress={() => setActiveTab('profile')}
+          onPress={() => {
+            console.log('Profile tab pressed');
+            setActiveTab('profile');
+          }}
           activeOpacity={0.7}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
           delayPressIn={0}
+          delayPressOut={50}
+          testID="tab-profile"
         >
           <User 
             size={24} 
@@ -1270,10 +1285,15 @@ export default function ClientHomeScreen() {
       {/* Chat button */}
       <TouchableOpacity 
         style={styles.chatButton}
-        onPress={() => router.push('/chat')}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        onPress={() => {
+          console.log('Chat button pressed');
+          router.push('/chat');
+        }}
+        hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
         delayPressIn={0}
+        delayPressOut={50}
         activeOpacity={0.8}
+        testID="chat-button"
       >
         <MessageCircle size={24} color="white" />
       </TouchableOpacity>
@@ -1714,6 +1734,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 5,
+    // Ensure tab bar doesn't interfere with touch events
+    zIndex: 10,
   },
   tabItem: {
     alignItems: 'center',
@@ -1722,6 +1744,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     minHeight: 48,
     flex: 1,
+    // Ensure proper touch handling
+    overflow: 'visible',
   },
   tabText: {
     fontSize: 16,
@@ -1751,6 +1775,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
+    // Ensure chat button is always touchable
+    zIndex: 20,
+    overflow: 'visible',
   },
   
   // Bloodwork styles

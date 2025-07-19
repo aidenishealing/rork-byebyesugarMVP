@@ -17,6 +17,54 @@ interface RemindersState {
   toggleReminder: (id: string) => void;
 }
 
+// Helper function to convert time string to minutes for comparison
+const convertTimeToMinutes = (timeStr: string): number => {
+  // Handle different time formats
+  let time = timeStr.toLowerCase().trim();
+  
+  // Remove spaces and normalize
+  time = time.replace(/\s+/g, '');
+  
+  // Check if it's in 12-hour format (has am/pm)
+  const hasAmPm = time.includes('am') || time.includes('pm');
+  const isAm = time.includes('am');
+  const isPm = time.includes('pm');
+  
+  // Extract the time part (remove am/pm)
+  const timePart = time.replace(/am|pm/g, '');
+  
+  // Split hours and minutes
+  const [hoursStr, minutesStr = '0'] = timePart.split(':');
+  let hours = parseInt(hoursStr, 10);
+  const minutes = parseInt(minutesStr, 10);
+  
+  // Handle invalid numbers
+  if (isNaN(hours)) hours = 0;
+  if (isNaN(minutes)) return hours * 60;
+  
+  // Convert to 24-hour format if needed
+  if (hasAmPm) {
+    if (isPm && hours !== 12) {
+      hours += 12;
+    } else if (isAm && hours === 12) {
+      hours = 0;
+    }
+  }
+  
+  // Return total minutes since midnight
+  return hours * 60 + minutes;
+};
+
+// Helper function to sort reminders by time
+const sortRemindersByTime = (reminders: Reminder[]): Reminder[] => {
+  return [...reminders].sort((a, b) => {
+    // Convert time strings to comparable format
+    const timeA = convertTimeToMinutes(a.time);
+    const timeB = convertTimeToMinutes(b.time);
+    return timeA - timeB;
+  });
+};
+
 // Default reminders for clients to edit
 const initialReminders: Reminder[] = [
   {
@@ -54,7 +102,7 @@ const initialReminders: Reminder[] = [
 export const useRemindersStore = create<RemindersState>()(
   persist(
     (set, get) => ({
-      reminders: initialReminders,
+      reminders: sortRemindersByTime(initialReminders),
       
       addReminder: (title, time) => {
         const newReminder = {
@@ -65,20 +113,23 @@ export const useRemindersStore = create<RemindersState>()(
         };
         
         set(state => ({
-          reminders: [...state.reminders, newReminder]
+          reminders: sortRemindersByTime([...state.reminders, newReminder])
         }));
         
         return newReminder;
       },
       
       editReminder: (id, title, time) => {
-        set(state => ({
-          reminders: state.reminders.map(reminder =>
+        set(state => {
+          const updatedReminders = state.reminders.map(reminder =>
             reminder.id === id
               ? { ...reminder, title, time }
               : reminder
-          )
-        }));
+          );
+          return {
+            reminders: sortRemindersByTime(updatedReminders)
+          };
+        });
       },
       
       deleteReminder: (id) => {

@@ -288,10 +288,14 @@ export default function ClientHomeScreen() {
   };
   
   const handleSaveReminder = (title: string, time: string) => {
+    console.log('Saving reminder:', { title, time, isEditing: isEditingReminder });
+    
     if (isEditingReminder && selectedReminder) {
+      console.log('Editing reminder:', selectedReminder.id, 'from', selectedReminder.time, 'to', time);
       editReminder(selectedReminder.id, title, time);
       Alert.alert('Success', 'Reminder updated successfully!');
     } else {
+      console.log('Adding new reminder:', { title, time });
       addReminder(title, time);
       Alert.alert('Success', 'Reminder added successfully!');
     }

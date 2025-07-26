@@ -49,8 +49,11 @@ export const useHabitsStore = create<HabitsState>()(persist(
     
     initTodayHabits: () => {
       const today = new Date().toISOString().split('T')[0];
+      const now = new Date().toISOString();
       set({
         todayHabits: {
+          id: `habit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          userId: 'current_user', // This should be replaced with actual user ID from auth
           date: today,
           weightCheck: null,
           morningAcvWater: null,
@@ -63,7 +66,9 @@ export const useHabitsStore = create<HabitsState>()(persist(
           energyLevel8pm: 5,
           wimHof: null,
           trackedSleep: null,
-          dayDescription: ''
+          dayDescription: '',
+          createdAt: now,
+          updatedAt: now
         }
       });
     },
@@ -91,10 +96,17 @@ export const useHabitsStore = create<HabitsState>()(persist(
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         const { clientHabits } = get();
+        const now = new Date().toISOString();
+        const habitToSave: DailyHabits = {
+          ...todayHabits,
+          date,
+          updatedAt: now
+        };
+        
         set({
           clientHabits: {
             ...clientHabits,
-            [date]: { ...todayHabits, date }
+            [date]: habitToSave
           },
           isLoading: false
         });
@@ -117,10 +129,17 @@ export const useHabitsStore = create<HabitsState>()(persist(
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         const { clientHabits } = get();
+        const now = new Date().toISOString();
+        const updatedHabit: DailyHabits = {
+          ...habit,
+          date,
+          updatedAt: now
+        };
+        
         set({
           clientHabits: {
             ...clientHabits,
-            [date]: habit
+            [date]: updatedHabit
           },
           isLoading: false
         });
@@ -143,8 +162,11 @@ export const useHabitsStore = create<HabitsState>()(persist(
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Mock data for demonstration
+        const now = new Date().toISOString();
         const mockHabits: Record<string, DailyHabits> = {
           '2023-06-15': {
+            id: 'habit_20230615_001',
+            userId: clientId,
             date: '2023-06-15',
             weightCheck: 'yes',
             morningAcvWater: 'yes',
@@ -157,9 +179,13 @@ export const useHabitsStore = create<HabitsState>()(persist(
             energyLevel8pm: 7,
             wimHof: 'yes',
             trackedSleep: 'yes',
-            dayDescription: 'Great day with family'
+            dayDescription: 'Great day with family',
+            createdAt: '2023-06-15T08:00:00.000Z',
+            updatedAt: '2023-06-15T20:00:00.000Z'
           },
           '2023-06-14': {
+            id: 'habit_20230614_001',
+            userId: clientId,
             date: '2023-06-14',
             weightCheck: 'yes',
             morningAcvWater: 'no',
@@ -172,7 +198,9 @@ export const useHabitsStore = create<HabitsState>()(persist(
             energyLevel8pm: 8,
             wimHof: 'yes',
             trackedSleep: 'yes',
-            dayDescription: 'Productive work day'
+            dayDescription: 'Productive work day',
+            createdAt: '2023-06-14T08:00:00.000Z',
+            updatedAt: '2023-06-14T20:00:00.000Z'
           }
         };
         

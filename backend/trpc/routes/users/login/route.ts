@@ -3,37 +3,25 @@ import { publicProcedure } from "@/backend/trpc/create-context";
 
 export default publicProcedure
   .input(z.object({
-    phoneNumber: z.string(),
-    password: z.string(),
+    phoneNumber: z.string().min(10, 'Phone number must be at least 10 digits'),
+    password: z.string().min(1, 'Password is required'),
   }))
-  .mutation(async ({ input }) => {
-    // In a real app, this would validate credentials against a database
-    // For now, we'll just check against hardcoded values
-    
-    if (input.phoneNumber === "+1234567890" && input.password === "iamgod123") {
+  .mutation(async ({ input, ctx }) => {
+    try {
+      const result = await ctx.db.authenticateUser(input.phoneNumber, input.password);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Authentication failed');
+      }
+      
       return {
         success: true,
-        user: {
-          id: "admin-1",
-          name: "Admin User",
-          phoneNumber: "+1234567890",
-          role: "admin" as const,
-        }
+        message: "Login successful",
+        user: result.data?.user,
+        token: result.data?.token
       };
-    } else if (input.phoneNumber === "+0987654321" && input.password === "client123") {
-      return {
-        success: true,
-        user: {
-          id: "client-1",
-          name: "Test Client",
-          phoneNumber: "+0987654321",
-          role: "client" as const,
-        }
-      };
+    } catch (error) {
+      console.error('Login error:', error);
+      throw new Error(error instanceof Error ? error.message : 'Authentication failed');
     }
-    
-    return {
-      success: false,
-      message: "Invalid credentials"
-    };
   });

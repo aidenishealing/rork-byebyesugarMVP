@@ -1,67 +1,55 @@
 import { z } from "zod";
-import { publicProcedure } from "@/backend/trpc/create-context";
+import { protectedProcedure } from "@/backend/trpc/create-context";
 
-export default publicProcedure
+export default protectedProcedure
   .input(z.object({
-    userId: z.string(),
+    userId: z.string().optional(), // For admin viewing client habits
     date: z.string().optional(),
+    page: z.number().min(1).optional().default(1),
+    limit: z.number().min(1).max(100).optional().default(20),
   }))
-  .query(async ({ input }) => {
-    // In a real app, this would fetch from a database
-    // For now, we'll just return mock data
-    
-    // If a specific date is requested
-    if (input.date) {
-      return {
-        date: input.date,
-        weightCheck: "yes",
-        morningAcvWater: "yes",
-        championWorkout: "yes",
-        meal10am: "Protein smoothie with berries",
-        hungerTimes: "noon and 6pm",
-        outdoorTime: "45 minute walk",
-        energyLevel2pm: 8,
-        meal6pm: "Grilled salmon with vegetables",
-        energyLevel8pm: 7,
-        wimHof: "yes",
-        trackedSleep: "yes",
-        dayDescription: "Had an important meeting in the morning, then worked from home. Felt energetic all day."
-      };
-    }
-    
-    // Otherwise return all habits for this user
-    return {
-      habits: {
-        "2023-06-15": {
-          date: "2023-06-15",
-          weightCheck: "yes",
-          morningAcvWater: "yes",
-          championWorkout: "yes",
-          meal10am: "Protein smoothie with berries",
-          hungerTimes: "noon and 6pm",
-          outdoorTime: "45 minute walk",
-          energyLevel2pm: 8,
-          meal6pm: "Grilled salmon with vegetables",
-          energyLevel8pm: 7,
-          wimHof: "yes",
-          trackedSleep: "yes",
-          dayDescription: "Had an important meeting in the morning, then worked from home. Felt energetic all day."
-        },
-        "2023-06-14": {
-          date: "2023-06-14",
-          weightCheck: "yes",
-          morningAcvWater: "no",
-          championWorkout: "yes",
-          meal10am: "Avocado toast",
-          hungerTimes: "1pm and 8pm",
-          outdoorTime: "30 minute jog",
-          energyLevel2pm: 6,
-          meal6pm: "Chicken salad",
-          energyLevel8pm: 8,
-          wimHof: "no",
-          trackedSleep: "yes",
-          dayDescription: "Traveling for work, had to adjust my routine but managed to stay on track."
+  .query(async ({ input, ctx }) => {
+    try {
+      // Determine target user ID
+      const targetUserId = input.userId || ctx.user.id;
+      
+      // Check permissions
+      if (ctx.user.role === 'client' && targetUserId !== ctx.user.id) {
+        throw new Error('Access denied');
+      }
+      
+      if (ctx.user.role === 'admin' && input.userId) {
+        const adminClients = await ctx.db.getAllClients(ctx.user.id);
+        const hasAccess = adminClients.some(client => client.id === input.userId);
+        if (!hasAccess) {
+          throw new Error('Access denied');
         }
       }
-    };
+      
+      // If a specific date is requested
+      if (input.date) {
+        const habit = await ctx.db.getDailyHabitByDate(targetUserId, input.date);
+        return {
+          success: true,
+          data: habit
+        };
+      }
+      
+      // Otherwise return paginated habits for this user
+      const result = await ctx.db.getDailyHabits(targetUserId, input.page, input.limit);
+      
+      return {
+        success: true,
+        data: result.data,
+        pagination: {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          hasMore: result.hasMore
+        }
+      };
+    } catch (error) {
+      console.error('Error fetching habits:', error);
+      throw new Error(error instanceof Error ? error.message : 'Failed to fetch habits');
+    }
   });

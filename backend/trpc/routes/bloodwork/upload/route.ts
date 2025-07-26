@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { protectedProcedure, Context } from '../../../create-context';
-import { BloodworkDocument } from '@/types/habit';
+import { protectedProcedure } from '../../../create-context';
 
 const uploadBloodworkSchema = z.object({
+  userId: z.string().optional(), // For admin uploading on behalf of client
   fileName: z.string().min(1, 'File name is required'),
   fileType: z.string().min(1, 'File type is required'),
   fileSize: z.number().positive('File size must be positive'),
@@ -11,10 +11,25 @@ const uploadBloodworkSchema = z.object({
 
 export const uploadBloodworkProcedure = protectedProcedure
   .input(uploadBloodworkSchema)
-  .mutation(async ({ input, ctx }: { input: z.infer<typeof uploadBloodworkSchema>; ctx: Context }) => {
+  .mutation(async ({ input, ctx }) => {
     try {
-      const { fileName, fileType, fileSize, fileData } = input;
-      const userId = ctx.user.id;
+      const { fileName, fileType, fileSize, fileData, userId } = input;
+      
+      // Determine target user ID
+      const targetUserId = userId || ctx.user.id;
+      
+      // Check permissions
+      if (ctx.user.role === 'client' && targetUserId !== ctx.user.id) {
+        throw new Error('Access denied');
+      }
+      
+      if (ctx.user.role === 'admin' && userId) {
+        const adminClients = await ctx.db.getAllClients(ctx.user.id);
+        const hasAccess = adminClients.some(client => client.id === userId);
+        if (!hasAccess) {
+          throw new Error('Access denied');
+        }
+      }
       
       // Validate file type
       const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'image/jpeg', 'image/png'];
@@ -22,75 +37,43 @@ export const uploadBloodworkProcedure = protectedProcedure
         throw new Error('Invalid file type. Only PDF, DOCX, TXT, JPEG, and PNG files are allowed.');
       }
       
-      // Validate file size (2MB limit for better compatibility)
-      const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+      // Validate file size (10MB limit as specified)
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
       if (fileSize > maxSize) {
-        throw new Error('File size exceeds 2MB limit. Please select a smaller file.');
-      }
-      
-      // Validate base64 data length to prevent memory issues
-      // Base64 encoding increases size by ~33%, so 5MB file becomes ~6.7MB
-      if (fileData.length > 3 * 1024 * 1024) { // ~3MB base64 limit for better compatibility
-        throw new Error('File data too large for processing. Please select a smaller file.');
+        throw new Error('File size exceeds 10MB limit. Please select a smaller file.');
       }
       
       // Log file processing info
       console.log(`Processing file: ${fileName}, size: ${fileSize} bytes, base64 length: ${fileData.length}`);
       
-      // In a real application, you would:
-      // 1. Save the file to a secure storage service (AWS S3, Google Cloud Storage, etc.)
-      // 2. Store the document metadata in a database
-      // 3. Return the document information
-      
-      // For this demo, we'll simulate the upload process
-      const documentId = `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const uploadDate = new Date().toISOString();
-      
       // Simulate file URL (in production, this would be the actual storage URL)
-      const fileUrl = `https://storage.example.com/bloodwork/${userId}/${documentId}`;
+      const fileUrl = `https://storage.example.com/bloodwork/${targetUserId}/${Date.now()}`;
       
-      const document: BloodworkDocument = {
-        id: documentId,
-        userId,
-        fileName,
-        fileType,
-        fileSize,
-        uploadDate,
-        fileUrl,
-      };
+      const result = await ctx.db.saveBloodworkDocument(
+        {
+          userId: targetUserId,
+          fileName,
+          fileType,
+          fileSize,
+          uploadDate: new Date().toISOString(),
+          fileUrl,
+          fileData, // Store base64 data for demo
+        },
+        ctx.user.id
+      );
       
-      // Simulate processing delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to upload bloodwork document');
+      }
       
-      // In a real app, save to database here
-      console.log('Bloodwork document uploaded successfully:', {
-        id: document.id,
-        fileName: document.fileName,
-        fileType: document.fileType,
-        fileSize: document.fileSize,
-        uploadDate: document.uploadDate
-      });
-      
-      // Return minimal response to avoid tRPC transform issues
       return {
         success: true,
-        document: {
-          id: document.id,
-          fileName: document.fileName,
-          fileType: document.fileType,
-          fileSize: document.fileSize,
-          uploadDate: document.uploadDate,
-          userId: document.userId,
-          fileUrl: document.fileUrl
-        },
+        data: result.data,
         message: 'Bloodwork document uploaded successfully',
       };
     } catch (error) {
       console.error('Error uploading bloodwork document:', error);
-      if (error instanceof Error) {
-        throw new Error(error.message);
-      }
-      throw new Error('Failed to upload bloodwork document');
+      throw new Error(error instanceof Error ? error.message : 'Failed to upload bloodwork document');
     }
   });
 

@@ -5,6 +5,7 @@ import { Platform, Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { DailyHabits, Client } from '@/types/habit';
+import { trpcClient } from '@/lib/trpc';
 
 interface HabitsState {
   allClients: Client[];
@@ -49,8 +50,11 @@ const useHabitsStoreImpl = create<HabitsState>()(persist(
     
     initTodayHabits: () => {
       const today = new Date().toISOString().split('T')[0];
+      const now = new Date().toISOString();
       set({
         todayHabits: {
+          id: `temp-${Date.now()}`,
+          userId: 'current-user',
           date: today,
           weightCheck: null,
           morningAcvWater: null,
@@ -63,7 +67,9 @@ const useHabitsStoreImpl = create<HabitsState>()(persist(
           energyLevel8pm: 5,
           wimHof: null,
           trackedSleep: null,
-          dayDescription: ''
+          dayDescription: '',
+          createdAt: now,
+          updatedAt: now
         }
       });
     },
@@ -87,20 +93,28 @@ const useHabitsStoreImpl = create<HabitsState>()(persist(
       set({ isLoading: true, error: null });
       
       try {
-        // Simulate API call
+        // Simulate API call for now
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         const { clientHabits } = get();
+        const habitData = {
+          ...todayHabits,
+          date,
+          id: `habit-${todayHabits.userId}-${date}`,
+          updatedAt: new Date().toISOString()
+        };
+        
         set({
           clientHabits: {
             ...clientHabits,
-            [date]: { ...todayHabits, date }
+            [date]: habitData
           },
           isLoading: false
         });
         
         return true;
       } catch (error) {
+        console.error('Error saving habits:', error);
         set({ 
           isLoading: false, 
           error: 'Failed to save habits. Please try again.' 
@@ -113,20 +127,27 @@ const useHabitsStoreImpl = create<HabitsState>()(persist(
       set({ isLoading: true, error: null });
       
       try {
-        // Simulate API call
+        // Simulate API call for now
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         const { clientHabits } = get();
+        const updatedHabit = {
+          ...habit,
+          date,
+          updatedAt: new Date().toISOString()
+        };
+        
         set({
           clientHabits: {
             ...clientHabits,
-            [date]: habit
+            [date]: updatedHabit
           },
           isLoading: false
         });
         
         return true;
       } catch (error) {
+        console.error('Error updating habit:', error);
         set({ 
           isLoading: false, 
           error: 'Failed to update habit. Please try again.' 
@@ -144,8 +165,10 @@ const useHabitsStoreImpl = create<HabitsState>()(persist(
         
         // Mock data for demonstration
         const mockHabits: Record<string, DailyHabits> = {
-          '2023-06-15': {
-            date: '2023-06-15',
+          '2025-03-24': {
+            id: 'habit-client-1-2025-03-24',
+            userId: clientId,
+            date: '2025-03-24',
             weightCheck: 'yes',
             morningAcvWater: 'yes',
             championWorkout: 'yes',
@@ -157,10 +180,14 @@ const useHabitsStoreImpl = create<HabitsState>()(persist(
             energyLevel8pm: 7,
             wimHof: 'yes',
             trackedSleep: 'yes',
-            dayDescription: 'Great day with family'
+            dayDescription: 'Great day with family',
+            createdAt: '2025-03-24T10:00:00Z',
+            updatedAt: '2025-03-24T10:00:00Z'
           },
-          '2023-06-14': {
-            date: '2023-06-14',
+          '2025-03-23': {
+            id: 'habit-client-1-2025-03-23',
+            userId: clientId,
+            date: '2025-03-23',
             weightCheck: 'yes',
             morningAcvWater: 'no',
             championWorkout: 'yes',
@@ -172,7 +199,9 @@ const useHabitsStoreImpl = create<HabitsState>()(persist(
             energyLevel8pm: 8,
             wimHof: 'yes',
             trackedSleep: 'yes',
-            dayDescription: 'Productive work day'
+            dayDescription: 'Productive work day',
+            createdAt: '2025-03-23T10:00:00Z',
+            updatedAt: '2025-03-23T10:00:00Z'
           }
         };
         
@@ -181,6 +210,7 @@ const useHabitsStoreImpl = create<HabitsState>()(persist(
           isLoading: false
         });
       } catch (error) {
+        console.error('Error fetching habits:', error);
         set({ 
           isLoading: false, 
           error: 'Failed to fetch habits. Please try again.' 

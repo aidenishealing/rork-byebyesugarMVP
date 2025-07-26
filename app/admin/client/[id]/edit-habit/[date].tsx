@@ -150,7 +150,7 @@ export default function EditHabitScreen() {
 
   const handleSave = async () => {
     const habitData = {
-      id: clientHabits[currentEditDate]?.id || 'temp-id',
+      id: clientHabits[currentEditDate]?.id || `habit-${id}-${currentEditDate}`,
       userId: id || '',
       date: currentEditDate,
       weightCheck,
@@ -170,12 +170,13 @@ export default function EditHabitScreen() {
     };
     
     try {
+      console.log('Saving habit data:', habitData);
       const success = await editHabit(currentEditDate, habitData);
       
       if (success) {
         Alert.alert(
           'Success',
-          'Habit entry updated successfully!',
+          `Habit entry for ${formatDisplayDate(selectedDate)} has been updated successfully!`,
           [
             { 
               text: 'OK', 
@@ -188,7 +189,7 @@ export default function EditHabitScreen() {
       }
     } catch (error) {
       console.error('Error updating habit:', error);
-      Alert.alert('Error', 'An unexpected error occurred.');
+      Alert.alert('Error', 'An unexpected error occurred while saving the habit entry.');
     }
   };
   

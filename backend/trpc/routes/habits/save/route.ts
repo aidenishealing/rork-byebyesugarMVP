@@ -51,7 +51,7 @@ export default protectedProcedure
       
       return {
         success: true,
-        message: "Habits saved successfully",
+        message: result.data?.lastEditedBy ? "Habit entry updated successfully by admin" : "Habits saved successfully",
         data: result.data
       };
     } catch (error) {

@@ -36,6 +36,7 @@ import VoiceInput from '@/components/VoiceInput';
 import VoiceHabitProcessor from '@/components/VoiceHabitProcessor';
 import BloodworkUploadModal from '@/components/BloodworkUploadModal';
 import BloodworkDocumentsList from '@/components/BloodworkDocumentsList';
+import DatePicker from '@/components/DatePicker';
 import { BloodworkDocument } from '@/types/habit';
 
 export default function ClientHomeScreen() {
@@ -338,6 +339,8 @@ export default function ClientHomeScreen() {
           fileSize: 2048576,
           uploadDate: '2024-01-15T10:30:00Z',
           fileUrl: 'https://storage.example.com/bloodwork/doc_1',
+          createdAt: '2024-01-15T10:30:00Z',
+          updatedAt: '2024-01-15T10:30:00Z',
         },
         {
           id: 'doc_2',
@@ -347,6 +350,8 @@ export default function ClientHomeScreen() {
           fileSize: 1536000,
           uploadDate: '2023-12-20T14:45:00Z',
           fileUrl: 'https://storage.example.com/bloodwork/doc_2',
+          createdAt: '2023-12-20T14:45:00Z',
+          updatedAt: '2023-12-20T14:45:00Z',
         },
       ];
       
@@ -624,7 +629,12 @@ export default function ClientHomeScreen() {
           </TouchableOpacity>
           
           <View style={styles.dateAndVoiceContainer}>
-            <Text style={styles.dateText}>{formatDisplayDate(currentDate)}</Text>
+            <DatePicker
+              selectedDate={currentDate}
+              onDateChange={setCurrentDate}
+              style={styles.datePicker}
+              disabled={isLoading}
+            />
             <VoiceInput
               onTranscriptionComplete={handleVoiceTranscription}
               style={styles.voiceInputButton}
@@ -1254,6 +1264,8 @@ export default function ClientHomeScreen() {
         visible={voiceProcessorVisible}
         transcribedText={voiceTranscription}
         currentHabits={todayHabits || {
+          id: 'temp-id',
+          userId: user?.id || '',
           date: format(currentDate, 'yyyy-MM-dd'),
           weightCheck: null,
           morningAcvWater: null,
@@ -1266,7 +1278,9 @@ export default function ClientHomeScreen() {
           energyLevel8pm: 5,
           wimHof: null,
           trackedSleep: null,
-          dayDescription: ''
+          dayDescription: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         }}
         onClose={() => {
           setVoiceProcessorVisible(false);
@@ -1429,6 +1443,10 @@ const styles = StyleSheet.create({
     color: Colors.text,
     textAlign: 'center',
     marginBottom: 12,
+  },
+  datePicker: {
+    marginBottom: 12,
+    alignSelf: 'center',
   },
   voiceInputButton: {
     paddingHorizontal: 16,

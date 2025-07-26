@@ -22,6 +22,7 @@ import { format, formatDisplayDate } from '@/utils/date';
 import VoiceInput from '@/components/VoiceInput';
 import VoiceHabitProcessor from '@/components/VoiceHabitProcessor';
 import BloodworkDocumentsList from '@/components/BloodworkDocumentsList';
+import DatePicker from '@/components/DatePicker';
 import { BloodworkDocument } from '@/types/habit';
 
 export default function ClientDetailScreen() {
@@ -125,6 +126,8 @@ export default function ClientDetailScreen() {
       const existingHabit = clientHabits[targetDate];
       
       const updatedHabit: DailyHabits = {
+        id: existingHabit?.id || 'temp-id',
+        userId: existingHabit?.userId || id || '',
         date: targetDate,
         weightCheck: existingHabit?.weightCheck || null,
         morningAcvWater: existingHabit?.morningAcvWater || null,
@@ -138,6 +141,8 @@ export default function ClientDetailScreen() {
         wimHof: existingHabit?.wimHof || null,
         trackedSleep: existingHabit?.trackedSleep || null,
         dayDescription: existingHabit?.dayDescription || '',
+        createdAt: existingHabit?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         ...updates
       };
       
@@ -185,6 +190,8 @@ export default function ClientDetailScreen() {
           fileSize: 2048576,
           uploadDate: '2024-01-15T10:30:00Z',
           fileUrl: `https://storage.example.com/bloodwork/${clientId}/doc_1`,
+          createdAt: '2024-01-15T10:30:00Z',
+          updatedAt: '2024-01-15T10:30:00Z',
         },
         {
           id: 'doc_2',
@@ -194,6 +201,8 @@ export default function ClientDetailScreen() {
           fileSize: 1536000,
           uploadDate: '2023-12-20T14:45:00Z',
           fileUrl: `https://storage.example.com/bloodwork/${clientId}/doc_2`,
+          createdAt: '2023-12-20T14:45:00Z',
+          updatedAt: '2023-12-20T14:45:00Z',
         },
         {
           id: 'doc_3',
@@ -203,6 +212,8 @@ export default function ClientDetailScreen() {
           fileSize: 512000,
           uploadDate: '2023-12-10T09:15:00Z',
           fileUrl: `https://storage.example.com/bloodwork/${clientId}/doc_3`,
+          createdAt: '2023-12-10T09:15:00Z',
+          updatedAt: '2023-12-10T09:15:00Z',
         },
       ];
       
@@ -324,7 +335,12 @@ export default function ClientDetailScreen() {
                 <ChevronLeft size={24} color={Colors.primary} />
               </TouchableOpacity>
               
-              <Text style={styles.dateText}>{formatDisplayDate(currentDate)}</Text>
+              <DatePicker
+                selectedDate={currentDate}
+                onDateChange={setCurrentDate}
+                style={styles.datePicker}
+                disabled={isLoading}
+              />
               
               <TouchableOpacity 
                 onPress={goToNextDay}
@@ -469,6 +485,8 @@ export default function ClientDetailScreen() {
         visible={voiceProcessorVisible}
         transcribedText={voiceTranscription}
         currentHabits={currentDateHabits || {
+          id: 'temp-id',
+          userId: id || '',
           date: format(currentDate, 'yyyy-MM-dd'),
           weightCheck: null,
           morningAcvWater: null,
@@ -481,7 +499,9 @@ export default function ClientDetailScreen() {
           energyLevel8pm: 5,
           wimHof: null,
           trackedSleep: null,
-          dayDescription: ''
+          dayDescription: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         }}
         onClose={() => {
           setVoiceProcessorVisible(false);
@@ -610,6 +630,10 @@ const styles = StyleSheet.create({
     color: Colors.text,
     textAlign: 'center',
     flex: 1,
+  },
+  datePicker: {
+    flex: 1,
+    alignSelf: 'center',
   },
   habitSummary: {
     marginTop: 8,

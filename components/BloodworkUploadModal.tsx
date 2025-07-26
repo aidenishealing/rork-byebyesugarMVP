@@ -39,6 +39,14 @@ export default function BloodworkUploadModal({
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const uploadMutation = trpc.bloodwork.upload.useMutation({
+    retry: (failureCount, error) => {
+      // Retry up to 3 times for network errors
+      if (failureCount < 3 && error?.message?.includes('Failed to fetch')) {
+        return true;
+      }
+      return false;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     onSuccess: (data) => {
       console.log('Upload successful:', data);
       setIsUploading(false);
@@ -67,24 +75,36 @@ export default function BloodworkUploadModal({
       setUploadProgress(0);
       
       let errorMessage = 'Failed to upload document. Please try again.';
+      let showRetryOption = false;
       
       if (error?.message) {
         if (error.message.includes('Failed to fetch')) {
           errorMessage = 'Network connection error. Please check your internet connection and try again.';
+          showRetryOption = true;
         } else if (error.message.includes('timeout')) {
           errorMessage = 'Upload timed out. Please check your connection and try again.';
+          showRetryOption = true;
         } else if (error.message.includes('too large')) {
           errorMessage = 'File is too large. Please select a smaller file.';
         } else if (error.message.includes('Invalid file type')) {
           errorMessage = 'Invalid file type. Please select a PDF, DOCX, TXT, JPEG, or PNG file.';
         } else if (error.message.includes('transform response')) {
           errorMessage = 'Server error occurred. Please try uploading a smaller file or try again later.';
+          showRetryOption = true;
+        } else if (error.message.includes('UNAUTHORIZED')) {
+          errorMessage = 'Authentication error. Please log in again.';
         } else {
           errorMessage = error.message;
+          showRetryOption = true;
         }
       }
       
-      Alert.alert('Upload Failed', errorMessage);
+      const alertButtons = showRetryOption ? [
+        { text: 'Cancel', style: 'cancel' as const },
+        { text: 'Retry', onPress: () => handleUpload() }
+      ] : [{ text: 'OK' }];
+      
+      Alert.alert('Upload Failed', errorMessage, alertButtons);
     },
   });
 

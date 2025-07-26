@@ -7,6 +7,7 @@ import { httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
 import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import NetworkStatus from "@/components/NetworkStatus";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -62,6 +63,7 @@ function RootLayoutNav() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
+          <NetworkStatus />
           <Stack>
             <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="login" options={{ headerShown: false }} />

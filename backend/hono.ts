@@ -3,9 +3,10 @@ import { trpcServer } from "@hono/trpc-server";
 import { cors } from "hono/cors";
 import { appRouter } from "./trpc/app-router";
 import { createContext } from "./trpc/create-context";
+import { handle } from "hono/vercel";
 
 // app will be mounted at /api
-const app = new Hono();
+const app = new Hono().basePath('/api');
 
 // Enable CORS for all routes with more permissive settings
 app.use("*", cors({
@@ -41,5 +42,12 @@ app.onError((err, c) => {
     stack: process.env.NODE_ENV === "development" ? err.stack : undefined
   }, 500);
 });
+
+// Export for Vercel
+export const GET = handle(app);
+export const POST = handle(app);
+export const PUT = handle(app);
+export const DELETE = handle(app);
+export const OPTIONS = handle(app);
 
 export default app;

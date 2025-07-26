@@ -89,15 +89,18 @@ export default function AddHabitScreen() {
   
   const handleDateChange = (newDate: Date) => {
     const newDateString = format(newDate, 'yyyy-MM-dd');
+    console.log('Date changed in add habits:', newDate, '->', newDateString);
     setSelectedDate(newDate);
     setDate(newDateString);
   };
 
   const handleSave = async () => {
+    console.log('Saving new habit with date:', date, 'selectedDate:', selectedDate);
+    
     const habitData = {
-      id: 'temp-id',
+      id: `habit-${id}-${date}`,
       userId: id || '',
-      date,
+      date, // This should be the correctly formatted date
       weightCheck,
       morningAcvWater,
       championWorkout,
@@ -115,6 +118,7 @@ export default function AddHabitScreen() {
     };
     
     try {
+      console.log('Saving habit data:', habitData);
       const success = await editHabit(date, habitData);
       
       if (success) {

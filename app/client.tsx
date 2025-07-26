@@ -162,7 +162,7 @@ export default function ClientHomeScreen() {
     
     // Format the current date to match the expected format
     const formattedDate = format(currentDate, 'yyyy-MM-dd');
-    console.log('Saving habits for date:', formattedDate, 'currentDate:', currentDate);
+    console.log('Saving habits for date:', formattedDate, 'currentDate:', currentDate, 'currentDate ISO:', currentDate.toISOString());
     
     const success = await saveHabits(formattedDate);
     
@@ -249,6 +249,7 @@ export default function ClientHomeScreen() {
   const goToPreviousDay = () => {
     const prevDate = new Date(currentDate);
     prevDate.setDate(prevDate.getDate() - 1);
+    console.log('Going to previous day:', prevDate, 'formatted:', format(prevDate, 'yyyy-MM-dd'));
     setCurrentDate(prevDate);
   };
   
@@ -258,8 +259,14 @@ export default function ClientHomeScreen() {
     
     // Don't allow navigating to future dates
     if (nextDate <= new Date()) {
+      console.log('Going to next day:', nextDate, 'formatted:', format(nextDate, 'yyyy-MM-dd'));
       setCurrentDate(nextDate);
     }
+  };
+  
+  const handleDateChange = (newDate: Date) => {
+    console.log('Date changed in client:', newDate, 'formatted:', format(newDate, 'yyyy-MM-dd'));
+    setCurrentDate(newDate);
   };
   
   // Reminder handlers
@@ -632,7 +639,7 @@ export default function ClientHomeScreen() {
           <View style={styles.dateAndVoiceContainer}>
             <DatePicker
               selectedDate={currentDate}
-              onDateChange={setCurrentDate}
+              onDateChange={handleDateChange}
               style={styles.datePicker}
               disabled={isLoading}
             />

@@ -1,8 +1,10 @@
 export const format = (date: Date, formatStr: string): string => {
   // Use local date components directly to avoid timezone issues
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  // Create a new date to avoid mutating the original
+  const localDate = new Date(date.getTime());
+  const year = localDate.getFullYear();
+  const month = String(localDate.getMonth() + 1).padStart(2, '0');
+  const day = String(localDate.getDate()).padStart(2, '0');
   
   if (formatStr === 'yyyy-MM-dd') {
     return `${year}-${month}-${day}`;
@@ -12,16 +14,25 @@ export const format = (date: Date, formatStr: string): string => {
     return `${month}/${day}/${year}`;
   }
   
-  return date.toDateString();
+  return localDate.toDateString();
 };
 
 export const parseDate = (dateString: string): Date => {
   // Parse date string in YYYY-MM-DD format and return local date
   // This ensures we get the exact date without timezone issues
   const [year, month, day] = dateString.split('-').map(Number);
+  
+  // Validate the parsed values
+  if (isNaN(year) || isNaN(month) || isNaN(day)) {
+    console.error('Invalid date string:', dateString);
+    return new Date();
+  }
+  
   const date = new Date(year, month - 1, day);
   // Set time to noon to avoid any timezone edge cases
   date.setHours(12, 0, 0, 0);
+  
+  console.log('parseDate:', dateString, '->', date.toISOString(), 'local:', format(date, 'yyyy-MM-dd'));
   return date;
 };
 

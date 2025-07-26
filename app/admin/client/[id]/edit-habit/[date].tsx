@@ -113,12 +113,14 @@ export default function EditHabitScreen() {
   
   const handleDateChange = (newDate: Date) => {
     const newDateString = format(newDate, 'yyyy-MM-dd');
+    console.log('Date changed in edit habits:', newDate, '->', newDateString);
     setSelectedDate(newDate);
     setCurrentEditDate(newDateString);
     
     // Load habit data for the new date if available
     if (clientHabits[newDateString]) {
       const habit = clientHabits[newDateString];
+      console.log('Loading existing habit data for', newDateString, habit);
       setWeightCheck(habit.weightCheck as string);
       setMorningAcvWater(habit.morningAcvWater as string);
       setChampionWorkout(habit.championWorkout as string);
@@ -133,6 +135,7 @@ export default function EditHabitScreen() {
       setDayDescription(habit.dayDescription || '');
     } else {
       // Reset to default values for new date
+      console.log('No existing data for', newDateString, 'resetting to defaults');
       setWeightCheck(null);
       setMorningAcvWater(null);
       setChampionWorkout(null);
@@ -149,10 +152,12 @@ export default function EditHabitScreen() {
   };
 
   const handleSave = async () => {
+    console.log('Saving habit with currentEditDate:', currentEditDate, 'selectedDate:', selectedDate);
+    
     const habitData = {
       id: clientHabits[currentEditDate]?.id || `habit-${id}-${currentEditDate}`,
       userId: id || '',
-      date: currentEditDate,
+      date: currentEditDate, // Use the currentEditDate which should be the selected date
       weightCheck,
       morningAcvWater,
       championWorkout,

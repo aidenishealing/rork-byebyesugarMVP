@@ -70,7 +70,7 @@ const useHabitsStoreImpl = create<HabitsState>()(persist(
           dayDescription: '',
           createdAt: now,
           updatedAt: now
-        }
+        } as DailyHabits
       });
     },
     

@@ -17,8 +17,12 @@ export const format = (date: Date, formatStr: string): string => {
 
 export const parseDate = (dateString: string): Date => {
   // Parse date string in YYYY-MM-DD format and return local date
+  // This ensures we get the exact date without timezone issues
   const [year, month, day] = dateString.split('-').map(Number);
-  return new Date(year, month - 1, day);
+  const date = new Date(year, month - 1, day);
+  // Set time to noon to avoid any timezone edge cases
+  date.setHours(12, 0, 0, 0);
+  return date;
 };
 
 export const getDayName = (date: Date): string => {

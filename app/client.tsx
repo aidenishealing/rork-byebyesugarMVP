@@ -162,6 +162,7 @@ export default function ClientHomeScreen() {
     
     // Format the current date to match the expected format
     const formattedDate = format(currentDate, 'yyyy-MM-dd');
+    console.log('Saving habits for date:', formattedDate, 'currentDate:', currentDate);
     
     const success = await saveHabits(formattedDate);
     

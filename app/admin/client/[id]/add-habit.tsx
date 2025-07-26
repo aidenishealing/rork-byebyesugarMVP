@@ -20,7 +20,7 @@ import { useHabitsStore } from '@/store/habits-store';
 import { format, parseDate } from '@/utils/date';
 
 export default function AddHabitScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, date: dateParam } = useLocalSearchParams<{ id: string; date?: string }>();
   const router = useRouter();
   const { isLoading, editHabit } = useHabitsStore();
   
@@ -33,8 +33,10 @@ export default function AddHabitScreen() {
     lastActive: ''
   });
   
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  // Initialize with the passed date parameter or current date
+  const initialDate = dateParam ? parseDate(dateParam) : new Date();
+  const [selectedDate, setSelectedDate] = useState<Date>(initialDate);
+  const [date, setDate] = useState(dateParam || format(new Date(), 'yyyy-MM-dd'));
   const [weightCheck, setWeightCheck] = useState<string | null>(null);
   const [morningAcvWater, setMorningAcvWater] = useState<string | null>(null);
   const [championWorkout, setChampionWorkout] = useState<string | null>(null);

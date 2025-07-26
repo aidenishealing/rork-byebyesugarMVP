@@ -105,8 +105,9 @@ export default function ClientDetailScreen() {
   };
   
   const handleAddHabit = () => {
-    // Navigate to add habit screen
-    router.push(`/admin/client/${id}/add-habit`);
+    // Navigate to add habit screen with the current selected date
+    const dateParam = format(currentDate, 'yyyy-MM-dd');
+    router.push(`/admin/client/${id}/add-habit?date=${dateParam}`);
   };
   
   // Voice input handlers

@@ -199,7 +199,7 @@ export default function EditHabitScreen() {
     <SafeAreaView style={styles.container}>
       <Header 
         title={
-          <TouchableOpacity onPress={() => {}} style={styles.headerTitleContainer}>
+          <View style={styles.headerTitleContainer}>
             <Text style={styles.headerTitle}>Edit Habits - </Text>
             <DatePicker
               selectedDate={selectedDate}
@@ -207,7 +207,7 @@ export default function EditHabitScreen() {
               style={styles.headerDatePicker}
               disabled={isLoading}
             />
-          </TouchableOpacity>
+          </View>
         }
         showBackButton 
         onBackPress={handleBack} 

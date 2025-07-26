@@ -5,7 +5,8 @@ import {
   StyleSheet, 
   SafeAreaView, 
   ScrollView,
-  Alert
+  Alert,
+  TouchableOpacity
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Colors from '@/constants/colors';
@@ -15,7 +16,9 @@ import YesNoQuestion from '@/components/YesNoQuestion';
 import Input from '@/components/Input';
 import Slider from '@/components/Slider';
 import Button from '@/components/Button';
+import DatePicker from '@/components/DatePicker';
 import { useHabitsStore } from '@/store/habits-store';
+import { format, parseDate, formatDisplayDate } from '@/utils/date';
 
 export default function EditHabitScreen() {
   const { id, date } = useLocalSearchParams<{ id: string; date: string }>();
@@ -43,6 +46,16 @@ export default function EditHabitScreen() {
   const [wimHof, setWimHof] = useState<string | null>(null);
   const [trackedSleep, setTrackedSleep] = useState<string | null>(null);
   const [dayDescription, setDayDescription] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [currentEditDate, setCurrentEditDate] = useState<string>(date || format(new Date(), 'yyyy-MM-dd'));
+  
+  useEffect(() => {
+    // Initialize selected date from the date parameter
+    if (date) {
+      setSelectedDate(parseDate(date));
+      setCurrentEditDate(date);
+    }
+  }, [date]);
   
   useEffect(() => {
     // In a real app, fetch client details from API
@@ -98,14 +111,48 @@ export default function EditHabitScreen() {
     router.back();
   };
   
-  const handleSave = async () => {
-    if (!date) {
-      Alert.alert('Error', 'Invalid date parameter');
-      return;
-    }
+  const handleDateChange = (newDate: Date) => {
+    const newDateString = format(newDate, 'yyyy-MM-dd');
+    setSelectedDate(newDate);
+    setCurrentEditDate(newDateString);
     
+    // Load habit data for the new date if available
+    if (clientHabits[newDateString]) {
+      const habit = clientHabits[newDateString];
+      setWeightCheck(habit.weightCheck as string);
+      setMorningAcvWater(habit.morningAcvWater as string);
+      setChampionWorkout(habit.championWorkout as string);
+      setMeal10am(habit.meal10am);
+      setHungerTimes(habit.hungerTimes);
+      setOutdoorTime(habit.outdoorTime);
+      setEnergyLevel2pm(habit.energyLevel2pm as number);
+      setMeal6pm(habit.meal6pm);
+      setEnergyLevel8pm(habit.energyLevel8pm as number);
+      setWimHof(habit.wimHof as string);
+      setTrackedSleep(habit.trackedSleep as string);
+      setDayDescription(habit.dayDescription || '');
+    } else {
+      // Reset to default values for new date
+      setWeightCheck(null);
+      setMorningAcvWater(null);
+      setChampionWorkout(null);
+      setMeal10am('');
+      setHungerTimes('');
+      setOutdoorTime('');
+      setEnergyLevel2pm(5);
+      setMeal6pm('');
+      setEnergyLevel8pm(5);
+      setWimHof(null);
+      setTrackedSleep(null);
+      setDayDescription('');
+    }
+  };
+
+  const handleSave = async () => {
     const habitData = {
-      date: date,
+      id: clientHabits[currentEditDate]?.id || 'temp-id',
+      userId: id || '',
+      date: currentEditDate,
       weightCheck,
       morningAcvWater,
       championWorkout,
@@ -118,10 +165,12 @@ export default function EditHabitScreen() {
       wimHof,
       trackedSleep,
       dayDescription,
+      createdAt: clientHabits[currentEditDate]?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
     
     try {
-      const success = await editHabit(date, habitData);
+      const success = await editHabit(currentEditDate, habitData);
       
       if (success) {
         Alert.alert(
@@ -148,7 +197,17 @@ export default function EditHabitScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Header 
-        title={`Edit Habit for ${client.name}`} 
+        title={
+          <TouchableOpacity onPress={() => {}} style={styles.headerTitleContainer}>
+            <Text style={styles.headerTitle}>Edit Habits - </Text>
+            <DatePicker
+              selectedDate={selectedDate}
+              onDateChange={handleDateChange}
+              style={styles.headerDatePicker}
+              disabled={isLoading}
+            />
+          </TouchableOpacity>
+        }
         showBackButton 
         onBackPress={handleBack} 
       />
@@ -156,8 +215,16 @@ export default function EditHabitScreen() {
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
           <Card>
-            <Text style={styles.cardTitle}>Edit Habit Entry</Text>
-            <Text style={styles.cardSubtitle}>Date: {formattedDate}</Text>
+            <Text style={styles.cardTitle}>Edit Habit Entry for {client.name}</Text>
+            <View style={styles.dateContainer}>
+              <Text style={styles.dateLabel}>Selected Date:</Text>
+              <DatePicker
+                selectedDate={selectedDate}
+                onDateChange={handleDateChange}
+                style={styles.datePicker}
+                disabled={isLoading}
+              />
+            </View>
             
             <YesNoQuestion
               question="Weight Check?"
@@ -290,5 +357,36 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     marginTop: 12,
+  },
+  headerTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginRight: 8,
+  },
+  headerDatePicker: {
+    flex: 1,
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: `${Colors.primary}10`,
+    borderRadius: 8,
+  },
+  dateLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text,
+    marginRight: 12,
+  },
+  datePicker: {
+    flex: 1,
   },
 });

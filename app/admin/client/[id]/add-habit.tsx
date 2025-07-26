@@ -15,8 +15,9 @@ import YesNoQuestion from '@/components/YesNoQuestion';
 import Input from '@/components/Input';
 import Slider from '@/components/Slider';
 import Button from '@/components/Button';
+import DatePicker from '@/components/DatePicker';
 import { useHabitsStore } from '@/store/habits-store';
-import { format } from '@/utils/date';
+import { format, parseDate } from '@/utils/date';
 
 export default function AddHabitScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -32,6 +33,7 @@ export default function AddHabitScreen() {
     lastActive: ''
   });
   
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [weightCheck, setWeightCheck] = useState<string | null>(null);
   const [morningAcvWater, setMorningAcvWater] = useState<string | null>(null);
@@ -83,8 +85,16 @@ export default function AddHabitScreen() {
     router.back();
   };
   
+  const handleDateChange = (newDate: Date) => {
+    const newDateString = format(newDate, 'yyyy-MM-dd');
+    setSelectedDate(newDate);
+    setDate(newDateString);
+  };
+
   const handleSave = async () => {
     const habitData = {
+      id: 'temp-id',
+      userId: id || '',
       date,
       weightCheck,
       morningAcvWater,
@@ -98,6 +108,8 @@ export default function AddHabitScreen() {
       wimHof,
       trackedSleep,
       dayDescription,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
     
     try {
@@ -134,8 +146,16 @@ export default function AddHabitScreen() {
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
           <Card>
-            <Text style={styles.cardTitle}>Add New Habit Entry</Text>
-            <Text style={styles.cardSubtitle}>Date: {new Date(date).toLocaleDateString()}</Text>
+            <Text style={styles.cardTitle}>Add New Habit Entry for {client.name}</Text>
+            <View style={styles.dateContainer}>
+              <Text style={styles.dateLabel}>Selected Date:</Text>
+              <DatePicker
+                selectedDate={selectedDate}
+                onDateChange={handleDateChange}
+                style={styles.datePicker}
+                disabled={isLoading}
+              />
+            </View>
             
             <YesNoQuestion
               question="Weight Check?"
@@ -268,5 +288,23 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     marginTop: 12,
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: `${Colors.primary}10`,
+    borderRadius: 8,
+  },
+  dateLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text,
+    marginRight: 12,
+  },
+  datePicker: {
+    flex: 1,
   },
 });

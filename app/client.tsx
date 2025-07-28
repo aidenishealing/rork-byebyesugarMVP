@@ -27,7 +27,7 @@ import Colors from '@/constants/colors';
 import { useHabitsStore } from '@/store/habits-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useRemindersStore } from '@/store/reminders-store';
-import { formatDisplayDate, format } from '@/utils/date';
+import { formatDisplayDate, format, getTodayString } from '@/utils/date';
 import { DailyHabits } from '@/types/habit';
 import HabitHistoryCard from '@/components/HabitHistoryCard';
 import ReminderModal from '@/components/ReminderModal';
@@ -121,9 +121,18 @@ export default function ClientHomeScreen() {
   useEffect(() => {
     if (user) {
       const formattedDate = format(currentDate, 'yyyy-MM-dd');
+      
+      console.log('🔄 Loading habits for date change:', {
+        currentDate: currentDate.toISOString(),
+        formattedDate,
+        userId: user.id
+      });
+      
       const habitForDate = getHabitByDate(formattedDate);
       
       if (habitForDate) {
+        console.log('📋 Loading existing habit data for:', formattedDate);
+        
         // If we have data for this date, load it
         updateHabit('date', formattedDate);
         updateHabit('weightCheck', habitForDate.weightCheck);
@@ -139,7 +148,11 @@ export default function ClientHomeScreen() {
         updateHabit('trackedSleep', habitForDate.trackedSleep);
         updateHabit('dayDescription', habitForDate.dayDescription);
       } else {
+        console.log('📝 Initializing empty habit data for:', formattedDate);
+        
         // If no data for this date, initialize with empty values
+        const DEFAULT_ENERGY_LEVEL = 5;
+        
         updateHabit('date', formattedDate);
         updateHabit('weightCheck', null);
         updateHabit('morningAcvWater', null);
@@ -147,13 +160,15 @@ export default function ClientHomeScreen() {
         updateHabit('meal10am', '');
         updateHabit('hungerTimes', '');
         updateHabit('outdoorTime', '');
-        updateHabit('energyLevel2pm', 5);
+        updateHabit('energyLevel2pm', DEFAULT_ENERGY_LEVEL);
         updateHabit('meal6pm', '');
-        updateHabit('energyLevel8pm', 5);
+        updateHabit('energyLevel8pm', DEFAULT_ENERGY_LEVEL);
         updateHabit('wimHof', null);
         updateHabit('trackedSleep', null);
         updateHabit('dayDescription', '');
       }
+      
+      console.log('✅ Habit loading completed for:', formattedDate);
     }
   }, [currentDate, user, getHabitByDate]);
   
@@ -162,25 +177,36 @@ export default function ClientHomeScreen() {
     
     // Format the current date to match the expected format
     const formattedDate = format(currentDate, 'yyyy-MM-dd');
-    console.log('Saving habits for date:', formattedDate, 'currentDate:', currentDate, 'currentDate ISO:', currentDate.toISOString());
+    
+    console.log('💾 handleSave() called:', {
+      currentDate: currentDate.toISOString(),
+      formattedDate,
+      localString: currentDate.toString(),
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    });
     
     const success = await saveHabits(formattedDate);
     
     if (success) {
+      const SUCCESS_MESSAGE_DURATION = 3000;
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      setTimeout(() => setSaveSuccess(false), SUCCESS_MESSAGE_DURATION);
       
       Alert.alert(
         'Success',
-        'Your habits have been saved successfully!',
+        `Your habits have been saved for ${formattedDate}!`,
         [{ text: 'OK' }]
       );
+      
+      console.log('✅ Habits saved successfully for date:', formattedDate);
     } else {
       Alert.alert(
         'Error',
         'Failed to save your habits. Please try again.',
         [{ text: 'OK' }]
       );
+      
+      console.error('❌ Failed to save habits for date:', formattedDate);
     }
   };
   
@@ -248,24 +274,43 @@ export default function ClientHomeScreen() {
   // Date navigation
   const goToPreviousDay = () => {
     const prevDate = new Date(currentDate);
-    prevDate.setDate(prevDate.getDate() - 1);
-    console.log('Going to previous day:', prevDate, 'formatted:', format(prevDate, 'yyyy-MM-dd'));
+    const ONE_DAY = 1;
+    prevDate.setDate(prevDate.getDate() - ONE_DAY);
+    
+    console.log('⬅️ goToPreviousDay():', {
+      from: format(currentDate, 'yyyy-MM-dd'),
+      to: format(prevDate, 'yyyy-MM-dd')
+    });
+    
     setCurrentDate(prevDate);
   };
   
   const goToNextDay = () => {
     const nextDate = new Date(currentDate);
-    nextDate.setDate(nextDate.getDate() + 1);
+    const ONE_DAY = 1;
+    nextDate.setDate(nextDate.getDate() + ONE_DAY);
     
     // Don't allow navigating to future dates
-    if (nextDate <= new Date()) {
-      console.log('Going to next day:', nextDate, 'formatted:', format(nextDate, 'yyyy-MM-dd'));
+    const today = new Date();
+    if (nextDate <= today) {
+      console.log('➡️ goToNextDay():', {
+        from: format(currentDate, 'yyyy-MM-dd'),
+        to: format(nextDate, 'yyyy-MM-dd')
+      });
+      
       setCurrentDate(nextDate);
+    } else {
+      console.log('🚫 Cannot navigate to future date:', format(nextDate, 'yyyy-MM-dd'));
     }
   };
   
   const handleDateChange = (newDate: Date) => {
-    console.log('Date changed in client:', newDate, 'formatted:', format(newDate, 'yyyy-MM-dd'));
+    console.log('📅 handleDateChange():', {
+      from: format(currentDate, 'yyyy-MM-dd'),
+      to: format(newDate, 'yyyy-MM-dd'),
+      newDateISO: newDate.toISOString()
+    });
+    
     setCurrentDate(newDate);
   };
   
@@ -654,12 +699,15 @@ export default function ClientHomeScreen() {
             onPress={goToNextDay}
             style={[
               styles.dateNavButton,
-              // Disable next button if current date is today
+              // Disable next button if current date is today or future
               new Date(currentDate).setHours(0,0,0,0) >= new Date().setHours(0,0,0,0) && styles.dateNavButtonDisabled
             ]}
             disabled={new Date(currentDate).setHours(0,0,0,0) >= new Date().setHours(0,0,0,0)}
           >
-            <ChevronRight size={24} color={new Date(currentDate).setHours(0,0,0,0) >= new Date().setHours(0,0,0,0) ? Colors.textSecondary : Colors.primary} />
+            <ChevronRight 
+              size={24} 
+              color={new Date(currentDate).setHours(0,0,0,0) >= new Date().setHours(0,0,0,0) ? Colors.textSecondary : Colors.primary} 
+            />
           </TouchableOpacity>
         </View>
         
